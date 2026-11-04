@@ -1,10 +1,10 @@
 # herdr-layout-eva
 
-A late-90s command-center HUD layout for [herdr-app](https://herdr.dev). It has a red command masthead, green cut-corner plates, amber frame lines, heavy Mincho kanji titles and large seven-segment readouts. A red/cyan signal field moves above the terminals; MOTION pauses it. The signal field is a schematic, while the adjacent counts show real agent states. Terminals use a near-opaque background for readability. Agents show up as HUD cards with a **SYNC RATE**, the percent of their context window still free. A blocked agent turns into a blinking hazard frame.
+A late-90s command-center HUD layout for [herdr-app](https://herdr.dev). It has a red command masthead, green cut-corner plates with Unit-01 violet for whatever is selected, amber frame lines, heavy Mincho kanji titles and large seven-segment readouts. A red/cyan signal field moves above the terminals; MOTION pauses it. The signal field is a schematic, while the adjacent counts show real agent states. Terminals use a near-opaque background for readability. Agents show up as HUD cards with a window onto their unit and a **SYNC RATE**, the percent of their context window still free. A blocked agent turns into a blinking hazard frame.
 
 ![EVA HUD](preview.png)
 
-All art is original vector work. It recreates a mood (colors, type, shapes), not any show's logos, characters or screenshots.
+The vector art is original. It recreates a mood (colors, type, shapes), not any show's logos, characters or screenshots. The unit art in `mods/eva-agents/units/` is generated and carries the Claude, Codex and OpenCode marks so you can tell agents apart; those marks belong to Anthropic, OpenAI and the OpenCode project.
 
 ## What's inside
 
@@ -13,7 +13,7 @@ All art is original vector work. It recreates a mood (colors, type, shapes), not
 - `mods/`: the eight mods the layout draws with, cloned from Herdr 0.1.12's shipped mods. Behavior is unchanged; only the look is replaced.
   - `eva-chrome`: the command masthead, native animated signal field (`command.js`), sidebar brand row and local clock. It also holds `wallpaper.png`.
   - `eva-spaces`: 作業区画 SPACES, with branch, ahead/behind and a status label.
-  - `eva-agents`: 稼働体 AGENTS cards, with the SYNC RATE gauge (`sync.js`). The readout uses the Digital-7 Mono font in `fonts/`, by Sizenko Alexander of [Style-7](http://www.styleseven.com), freeware for non-commercial use.
+  - `eva-agents`: 稼働体 AGENTS cards, with unit art per program (`units/<program>.png`) and the SYNC RATE gauge (`sync.js`). The readout uses the Digital-7 Mono font in `fonts/`, by Sizenko Alexander of [Style-7](http://www.styleseven.com), freeware for non-commercial use.
   - `eva-tabs`: the tab bar.
   - `eva-pane`: the slanted pane header.
   - `eva-status`: the status bar, with the agent count, NEEDS YOU and the MOTION toggle.
@@ -55,7 +55,7 @@ Nothing reaches the network.
 - A fresh OpenCode shows `---.-` until its first reply.
 - Two OpenCode agents, or two fresh Codex agents, in the same folder show the same rate.
 - `T+4m` on a card is the time since the agent's state last changed. On the first run every agent is stamped "now".
-- Status labels show only while an agent is working, done or blocked. Idle agents read `STANDBY` on cards and space rows.
+- Status labels show only while an agent is working, done or blocked. Idle agents read `待機` on cards and space rows.
 
 ## Developing
 
