@@ -1,6 +1,6 @@
 # herdr-layout-eva
 
-A late-90s command-center HUD layout for [herdr-app](https://herdr.dev). It has a red command masthead, green cut-corner plates with Unit-01 violet for whatever is selected, amber frame lines, heavy Mincho kanji titles and large seven-segment readouts. A red/cyan signal field moves above the terminals; MOTION pauses it. The signal field is a schematic, while the adjacent counts show real agent states. Terminals use a near-opaque background for readability. Agents show up as HUD cards with a window onto their unit and a **SYNC RATE**, the percent of their context window still free. A blocked agent turns into a blinking hazard frame.
+A late-90s command-center HUD layout for [herdr-app](https://herdr.dev). It has a red command masthead, green cut-corner plates with Unit-01 violet for whatever is selected, amber frame lines, heavy Mincho kanji titles and large seven-segment readouts. A red/cyan signal field moves above the terminals; MOTION pauses it. The signal field is a schematic, while the adjacent counts show real agent states. Terminals are about 80% opaque, so the topo map shows faintly behind them. Agents show up as HUD cards with a window onto their unit and a **SYNC RATE**, the percent of their context window still free. A blocked agent turns into a blinking hazard frame.
 
 ![EVA HUD](preview.png)
 

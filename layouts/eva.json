@@ -12,7 +12,7 @@
     "image": "mods/eva-chrome/wallpaper.png",
     "fit": "cover"
   },
-  "terminal_opacity": 0.88,
+  "terminal_opacity": 0.55,
   "terminal_padding": [
     12,
     12

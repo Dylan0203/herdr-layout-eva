@@ -30,7 +30,7 @@ Palette (also in every mod's `eva.js`): ink `#0a0a0a`, deep `#101710`, slab `#17
   - The active tab is a violet fill with a 3px lime bar along its top. Others are 1px green outlines that tint `#436c3533` on hover.
   - Inside: the position as `01` in bold mono orange, the name in 12px bold caps (truncated), a green spinner while working, a 7px orange or white square for blocked or done, and the close × on the active tab.
   - `+` is orange. `FILES` / `CHANGES` are square 11px bold caps buttons with a green outline, or a violet fill and lime outline when open.
-- **Panes** (`main`): transparent frame, 1px `#6b893b99` border, 1px amber when focused, radius 0, 8px gaps. The work area has 8px padding. Terminals are padded 12px and drawn at `terminal_opacity` 0.88.
+- **Panes** (`main`): transparent frame, 1px `#6b893b99` border, 1px amber when focused, radius 0, 8px gaps. The work area has 8px padding. Terminals are padded 12px and drawn at `terminal_opacity` 0.55, which shows as about 80%.
   - **Header, 30px** (`eva-pane`): a `#0a0a0acc` strip with a 1px bottom border (`#f5b44b59` focused, `#436c3566` otherwise).
   - On the left is a slab 40% of the pane's width, clamped to 260–480px, whose right edge slants 18px down to the left. It is orange when focused, `#172017` otherwise. On it: `PANE 01` in bold mono (ink, or orange when unfocused), the program icon, the program in bold caps, and the folder in caps (home shortened to `~`).
   - On the right: `稼働` or `完了` labels, or the blinking 警告, then split, zoom and close icons in orange on hover.
@@ -57,7 +57,7 @@ Palette (also in every mod's `eva.js`): ink `#0a0a0a`, deep `#101710`, slab `#17
 ## Built from
 
 - `layouts/eva.json`: a root row of `sidebar` and `work`, as in the shipped `main`.
-  - The root sets `theme: eva`, `preview: layouts/eva.png`, `titlebar: none`, `traffic_lights: [12, 16]`, `background: {image: "mods/eva-chrome/wallpaper.png", fit: "cover"}`, `terminal_opacity: 0.88`, `terminal_padding: [12, 12]` and the 1px `#f5b44b66` divider.
+  - The root sets `theme: eva`, `preview: layouts/eva.png`, `titlebar: none`, `traffic_lights: [12, 16]`, `background: {image: "mods/eva-chrome/wallpaper.png", fit: "cover"}`, `terminal_opacity: 0.55`, `terminal_padding: [12, 12]` and the 1px `#f5b44b66` divider.
   - `sidebar` is a column of `brand`, `sidebar-lists` (`spaces`, `agents`) and `sidebar-footer`.
   - `work` is a column of `command`, `tabs`, a `work-body` row and `status`. `work-body` holds `main` and the hidden `panel` stack of `files` and `changes`. The sidebar, tabs and status nodes carry the `#0b100af5` background; the command deck also draws its own background.
   - The `main` pane frame is `{gap: 8, radius: 0, background: "#00000000", lone: true, border: {1, "#6b893b99"}, focus: {1, "accent"}, header: {mod: "eva-pane", height: 30, position: "top", reveal: "always"}}`.
