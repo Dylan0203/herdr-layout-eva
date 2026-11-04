@@ -1,0 +1,1 @@
+{ "place": "none", "title": "Operation Start", "overlay": { "kind": "window", "width": 1, "height": 1, "at": { "x": 0, "y": 0 }, "frame": "none" } }
