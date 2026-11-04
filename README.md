@@ -30,7 +30,7 @@ All art is original vector work. It recreates a mood (colors, type, shapes), not
 Ask your coding agent:
 
 ```text
-Install the EVA layout from https://github.com/<owner>/herdr-layout-eva by following the Install section of its RECIPE.md.
+Install the EVA layout from https://github.com/Dylan0203/herdr-layout-eva by following the Install section of its RECIPE.md.
 ```
 
 It copies the layout, theme and mods into `~/.config/herdr-app/` and switches to the layout. To go back, open the palette (`cmd-shift-p`) and pick "Layout: Herdr".
