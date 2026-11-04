@@ -354,9 +354,9 @@ export default class Spaces extends View {
       .justify_center()
       .gap(3)
       .when(on, (el) => el
-        .child(fill(cut(this.width - 16, rowHeight({ tree }), { tr: 10, br: 10 }), C.purple))
-        .child(div().absolute().left(0).top(0).bottom(0).w(4).bg(C.orange)))
-      .when(!on, (el) => el.border_b(1).border_color("#436c3566").hover((s) => s.bg("#436c3526")))
+        .child(fill(cut(this.width - 16, rowHeight({ tree }), { tr: 10, br: 10 }), C.violet))
+        .child(div().absolute().left(0).top(0).bottom(0).w(4).bg(C.lime)))
+      .when(!on, (el) => el.border_b(1).border_color(C.violet + "cc").hover((s) => s.bg(C.violet + "40")))
       .when(this.pressed === i && this.over !== i, (el) => el.opacity(0.5))
       .when(this.pressed !== null && this.over === i && this.pressed !== i, (el) => el.child(
         div().absolute().left(0).right(0).h(2).bg(t.accent)
@@ -392,10 +392,10 @@ export default class Spaces extends View {
           .when(Boolean(tree), el => el.pl(16).child(svg("mods/workspace-chrome/branch.svg").size(13).text_color(on ? "#ffffff" : C.dim)))
           .child(div().flex_1().min_w(0).truncate().font_weight(700).text_size(tree ? 12 : 13)
             .text_color(on ? "#ffffff" : C.muted).child(w.name.toUpperCase()))
-          .when(tree && Boolean(g), el => el.child(div().text_color(on ? "#dce4c9" : C.dim).child(this.gitTail(g, tree, w.name, t))))
+          .when(tree && Boolean(g), el => el.child(div().text_color(on ? C.lilac : C.dim).child(this.gitTail(g, tree, w.name, t))))
           .child(this.state(w)),
       )
-      .when(!tree, (el) => el.child(div().text_color(on ? "#dce4c9" : C.dim)
+      .when(!tree, (el) => el.child(div().text_color(on ? C.lilac : C.dim)
         .child(g ? this.gitTail(g, tree, w.name, t) : div().font_family(MONO).text_size(11).child("NO REPO"))));
   }
 

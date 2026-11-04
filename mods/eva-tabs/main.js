@@ -61,8 +61,8 @@ export default class Tabs extends View {
       const shape = cut(TAB_W, TAB_H, { tr: CUT });
       return h_flex().id(`tab-${c.id}`).relative().w(TAB_W).h(TAB_H).pl(10).pr(CUT + 4).gap(7).items_center().flex_none().text_size(12)
         .text_color(c.active ? "#ffffff" : t.muted)
-        .child(c.active ? fill(shape, C.purple) : stroke(shape, C.purple))
-        .when(c.active, el => el.child(div().absolute().top(0).left(0).w(TAB_W - CUT).h(3).bg(C.orange)))
+        .child(c.active ? fill(shape, C.violet) : stroke(shape, C.purple))
+        .when(c.active, el => el.child(div().absolute().top(0).left(0).w(TAB_W - CUT).h(3).bg(C.lime)))
         .hover(s => s.bg(c.active ? "#00000000" : "#436c3533"))
         .on_mouse_down("left", (e, cx) => { cx.stop_propagation(); this.pressed = i; if (e.click_count === 2) run("tab.rename", { id: c.id }); })
         .on_mouse_up("left", () => {
@@ -88,7 +88,7 @@ export default class Tabs extends View {
     const panelButton = (id, label, icon) => {
       const on = panel && !panel.hidden && body?.active === id;
       return h_flex().id(`panel-${id}`).h(26).px(8).gap(5).flex_none().items_center().rounded(0)
-        .text_size(11).font_weight(700).bg(on ? C.purple : "#00000000").text_color(on ? "#ffffff" : t.muted).border(1).border_color(on ? C.orange : C.purple)
+        .text_size(11).font_weight(700).bg(on ? C.violet : "#00000000").text_color(on ? "#ffffff" : t.muted).border(1).border_color(on ? C.lime : C.purple)
         .hover(s => s.bg(t.hover)).on_mouse_down("left", stop)
         .on_click(() => {
           if (on) run("layout.hide", { id: "panel" });
