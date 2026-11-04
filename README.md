@@ -2,7 +2,7 @@
 
 A late-90s command-center HUD layout for [herdr-app](https://herdr.dev). It has purple cut-corner plates, orange frame lines, heavy Mincho kanji titles and a dim tactical topo map behind see-through panes. Agents show up as HUD cards with a **SYNC RATE**, the percent of their context window still free. A blocked agent turns into a blinking hazard frame.
 
-![EVA](preview.png)
+![EVA HUD](preview.png)
 
 All art is original vector work. It recreates a mood (colors, type, shapes), not any show's logos, characters or screenshots.
 

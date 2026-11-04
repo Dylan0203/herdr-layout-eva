@@ -1,8 +1,8 @@
-# EVA
+# EVA HUD
 
 A herdr-app layout in the style of a late-90s command-center HUD. Near-black panels sit over a dim tactical topo map. Everything selected is an Evangelion-purple plate with 45° cut corners and an orange edge. Section titles are heavy Mincho kanji with small orange English captions. Agents are HUD cards that show a SYNC RATE, the percent of their context window still free, on a ten-cell gauge. A blocked agent turns into an orange-and-black hazard frame with a blinking 警告 WARNING. All art is original vector work: no logos, characters or screenshots from any show.
 
-![EVA](preview.png)
+![EVA HUD](preview.png)
 
 ## What you see
 
