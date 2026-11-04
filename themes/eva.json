@@ -4,8 +4,22 @@
   "selection": "#3b2560",
   "cursor": "#ff6a00",
   "ansi": [
-    "#141019", "#e0002a", "#8fd14f", "#ffb000", "#5b8cff", "#9a6bd6", "#3fd0c9", "#d8d2e4",
-    "#4a4258", "#ff3355", "#b4ef7a", "#ffd060", "#8fb0ff", "#c39cf0", "#7fe8e2", "#ffffff"
+    "#141019",
+    "#e0002a",
+    "#8fd14f",
+    "#ffb000",
+    "#5b8cff",
+    "#9a6bd6",
+    "#3fd0c9",
+    "#d8d2e4",
+    "#4a4258",
+    "#ff3355",
+    "#b4ef7a",
+    "#ffd060",
+    "#8fb0ff",
+    "#c39cf0",
+    "#7fe8e2",
+    "#ffffff"
   ],
   "colors": {
     "canvas": "#07060b",
@@ -25,7 +39,7 @@
     "solid": "#ff6a00",
     "solid_foreground": "#0a0a0a",
     "working": "#8fd14f",
-    "blocked": "#ff6a00",
+    "blocked": "#e0002a",
     "done": "#f2f2f2",
     "idle": "#7d7590",
     "unknown": "#7d7590"

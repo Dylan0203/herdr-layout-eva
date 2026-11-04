@@ -1,6 +1,6 @@
 # herdr-layout-eva
 
-A late-90s command-center HUD layout for [herdr-app](https://herdr.dev). It has purple cut-corner plates, orange frame lines, heavy Mincho kanji titles and a dim tactical topo map behind see-through panes. Agents show up as HUD cards with a **SYNC RATE**, the percent of their context window still free. A blocked agent turns into a blinking hazard frame.
+A late-90s command-center HUD layout for [herdr-app](https://herdr.dev). It has purple cut-corner plates, orange for whatever is selected, heavy Mincho kanji titles and large seven-segment readouts. A command deck above the terminals holds live agent counts and an orange/purple signal field; click the field to hold it still. Its top strip is a warning light: a thin red rule normally, solid red when an agent needs you. Red is kept for warnings only. Terminals are about 80% opaque, so the topo map shows faintly behind them. Agents show up as HUD cards with a **SYNC RATE**, the percent of their context window still free. A new agent opens with a full-window 作戦開始 card. A blocked agent turns into a blinking hazard frame.
 
 ![EVA HUD](preview.png)
 
@@ -10,14 +10,15 @@ All art is original vector work. It recreates a mood (colors, type, shapes), not
 
 - `layouts/eva.json`: the layout, with `layouts/eva.png` as its preview in Settings → Look.
 - `themes/eva.json`: the theme. Near-black terminals with purple, orange and green ANSI colors. Herdr's own palette, picker and menus pick it up too.
-- `mods/`: the eight mods the layout draws with, cloned from Herdr 0.1.12's shipped mods. Behavior is unchanged; only the look is replaced.
-  - `eva-chrome`: the sidebar brand row and footer. It also holds `wallpaper.png`.
+- `mods/`: the nine mods the layout draws with. Eight are cloned from Herdr 0.1.12's shipped mods, with behavior unchanged and only the look replaced; `eva-launch` is new.
+  - `eva-chrome`: the command deck with its agent counts and native animated signal field (`command.js`), sidebar brand row and local clock. It also holds `wallpaper.png`.
   - `eva-spaces`: 作業区画 SPACES, with branch, ahead/behind and a status label.
-  - `eva-agents`: 稼働体 AGENTS cards, with the SYNC RATE gauge (`sync.js`).
+  - `eva-agents`: 稼働体 AGENTS cards, with the SYNC RATE gauge (`sync.js`). The readout uses the Digital-7 Mono font in `fonts/`, by Sizenko Alexander of [Style-7](http://www.styleseven.com), freeware for non-commercial use.
   - `eva-tabs`: the tab bar.
   - `eva-pane`: the slanted pane header.
-  - `eva-status`: the status bar, with the agent count, NEEDS YOU and the MOTION toggle.
+  - `eva-status`: the status bar, with the agent count, NEEDS YOU and the MOTION toggle. MOTION off stills every animation: the signal field and the warning blink.
   - `eva-files`, `eva-changes`: the 資料 FILES and 変更 CHANGES panels.
+  - `eva-launch`: the 作戦開始 card `eva-agents` opens over the window when a new agent starts. It shows for about 1.8 seconds, doesn't take the keyboard, and closes on click. MOTION off skips it.
 
 ## Requirements
 
@@ -51,11 +52,12 @@ Nothing reaches the network.
 
 ## Known limits
 
+- SYNC RATE for Claude Code measures against 1M tokens. For a smaller budget, set `autoCompactWindow` in `~/.claude/settings.json` (or per model under `modelSettings`); note that Claude Code then also auto-compacts at that size.
 - SYNC RATE covers local Claude Code, Codex and OpenCode agents. Others, and agents on other machines, show `---.-`.
 - A fresh OpenCode shows `---.-` until its first reply.
 - Two OpenCode agents, or two fresh Codex agents, in the same folder show the same rate.
 - `T+4m` on a card is the time since the agent's state last changed. On the first run every agent is stamped "now".
-- Status labels show only while an agent is working, done or blocked. Idle agents read `STANDBY` on cards and space rows.
+- Status labels show only while an agent is working, done or blocked. Idle agents read `待機` on cards and space rows.
 
 ## Developing
 
@@ -66,6 +68,6 @@ Edit in `~/.config/herdr-app/` (Herdr ignores edits behind symlinks), then copy 
 bun install && bunx --bun vitest run
 ```
 
-Every mod carries its own identical `eva.js` (colors and drawing helpers), because a mod can import only from its own folder. Change one, then copy it to all eight.
+Every mod carries its own identical `eva.js` (colors and drawing helpers), because a mod can import only from its own folder. Change one, then copy it to all nine.
 
 See [RECIPE.md](RECIPE.md) for the full spec: every color, size and shape, how each mod draws, and what tripped the build up.

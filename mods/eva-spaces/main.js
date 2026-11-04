@@ -60,7 +60,7 @@ export default class Spaces extends View {
     this.shown = new Set(spaces().map((s) => s.id));
     this.born = {};
     this.pressed = null;
-    this.width = 268;
+    this.width = 304;
     this.over = null;
     this.machines = [];
     this.reconnecting = JSON.parse(localStorage.getItem("machines.reconnecting") ?? "{}");
@@ -356,7 +356,7 @@ export default class Spaces extends View {
       .when(on, (el) => el
         .child(fill(cut(this.width - 16, rowHeight({ tree }), { tr: 10, br: 10 }), C.purple))
         .child(div().absolute().left(0).top(0).bottom(0).w(4).bg(C.orange)))
-      .when(!on, (el) => el.border_b(1).border_color("#6b3fa066").hover((s) => s.bg("#6b3fa026")))
+      .when(!on, (el) => el.border_b(1).border_color(C.purple + "cc").hover((s) => s.bg(C.purple + "40")))
       .when(this.pressed === i && this.over !== i, (el) => el.opacity(0.5))
       .when(this.pressed !== null && this.over === i && this.pressed !== i, (el) => el.child(
         div().absolute().left(0).right(0).h(2).bg(t.accent)
@@ -392,10 +392,10 @@ export default class Spaces extends View {
           .when(Boolean(tree), el => el.pl(16).child(svg("mods/workspace-chrome/branch.svg").size(13).text_color(on ? "#ffffff" : C.dim)))
           .child(div().flex_1().min_w(0).truncate().font_weight(700).text_size(tree ? 12 : 13)
             .text_color(on ? "#ffffff" : C.muted).child(w.name.toUpperCase()))
-          .when(tree && Boolean(g), el => el.child(div().text_color(on ? "#e6dcf5" : C.dim).child(this.gitTail(g, tree, w.name, t))))
+          .when(tree && Boolean(g), el => el.child(div().text_color(on ? C.lilac : C.dim).child(this.gitTail(g, tree, w.name, t))))
           .child(this.state(w)),
       )
-      .when(!tree, (el) => el.child(div().text_color(on ? "#e6dcf5" : C.dim)
+      .when(!tree, (el) => el.child(div().text_color(on ? C.lilac : C.dim)
         .child(g ? this.gitTail(g, tree, w.name, t) : div().font_family(MONO).text_size(11).child("NO REPO"))));
   }
 
@@ -432,8 +432,8 @@ export default class Spaces extends View {
       .child(h_flex().relative().h(collapsed ? 31 : 56).pl(14).pr(10).pt(collapsed ? 0 : 10).pb(collapsed ? 0 : 10).gap(8)
         .items_end().text_color(C.dim)
         .when(!collapsed, el => el
-          .child(div().font_family(MINCHO).font_weight(700).text_size(26).text_color(C.white).child("作業区画"))
-          .child(div().pb(4).text_size(10.5).font_weight(700).text_color(C.orange).child("SPACES"))
+          .child(div().font_family(MINCHO).font_weight(700).text_size(30).line_height(1).mb(-2).text_color(C.white).child("作業区画"))
+          .child(div().text_size(10.5).line_height(1).font_weight(700).text_color(C.orange).child("SPACES"))
           .child(div().absolute().left(14).right(14).bottom(4).h(10).child(line([[0, 9], [this.width - 46, 9], [this.width - 30, 0]], C.orange))))
         .child(div().flex_1())
         .child(div().id("space-new").size(26).flex_none().flex().items_center().justify_center().text_color(C.orange).hover(s => s.bg(t.hover).text_color(t.foreground))

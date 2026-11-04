@@ -15,17 +15,19 @@ export const C = {
   text: "#e8e4f0",
   muted: "#b8aed0",
   dim: "#7d7590",
+  // Text on a selected plate.
+  lilac: "#e6dcf5",
 };
 export const MINCHO = "Hiragino Mincho ProN";
 export const MONO = "JetBrains Mono";
 
 // What each agent status reads as on screen.
 export const LABEL = {
-  working: "ACTIVE",
-  blocked: "WARNING",
-  done: "COMPLETE",
-  idle: "STANDBY",
-  unknown: "STANDBY",
+  working: "稼働",
+  blocked: "警告",
+  done: "完了",
+  idle: "待機",
+  unknown: "待機",
 };
 export const TONE = {
   working: C.green,
@@ -88,7 +90,7 @@ export function blink(id, el, period = 900) {
 }
 
 // A small status badge: outlined, or filled for emphasis.
-export function badge(status, { filled = false, size = 10 } = {}) {
+export function badge(status, { filled = false, size = 11 } = {}) {
   const tone = TONE[status] ?? C.dim;
   return div()
     .flex_none()
@@ -100,14 +102,17 @@ export function badge(status, { filled = false, size = 10 } = {}) {
     .border_color(tone)
     .when(filled, (d) => d.bg(tone).text_color(C.ink))
     .when(!filled, (d) => d.text_color(tone))
+    .font_family(MINCHO)
     .text_size(size)
+    .line_height(1)
     .font_weight(700)
-    .child(LABEL[status] ?? "STANDBY");
+    .child(LABEL[status] ?? LABEL.idle);
 }
 
-// The blocked badge: hazard frame around WARNING, blinking.
-export function warning(id, text = "WARNING", size = 10) {
-  const w = text.length * (size * 0.72) + 16,
+// The blocked badge: hazard frame around 警告, blinking.
+export function warning(id, text = LABEL.blocked, size = 10) {
+  const wide = (c) => /[　-鿿]/.test(c);
+  const w = [...text].reduce((sum, c) => sum + (wide(c) ? size * 1.05 : size * 0.72), 16),
     h = size + 8;
   return blink(
     id,

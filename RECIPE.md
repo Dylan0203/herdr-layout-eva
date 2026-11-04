@@ -1,52 +1,61 @@
 # EVA HUD
 
-A herdr-app layout in the style of a late-90s command-center HUD. Near-black panels sit over a dim tactical topo map. Everything selected is an Evangelion-purple plate with 45° cut corners and an orange edge. Section titles are heavy Mincho kanji with small orange English captions. Agents are HUD cards that show a SYNC RATE, the percent of their context window still free, on a ten-cell gauge. A blocked agent turns into an orange-and-black hazard frame with a blinking 警告 WARNING. All art is original vector work: no logos, characters or screenshots from any show.
+A herdr-app layout in the style of a late-90s command-center HUD. Near-black panels sit over a dim tactical topo map. Plates have 45° cut corners. Each color means one thing: orange marks what is selected or focused, purple is structure (plates, frames), green is healthy data, and red is kept for warnings. A command deck holds large seven-segment agent counts, a three-part status diagram, and a moving orange/purple signal field; its top strip lights solid red when an agent needs you. Section titles are heavy white Mincho kanji with small orange English captions. Agents are HUD cards with a SYNC RATE, the percent of their context window still free, on a ten-cell gauge. Status labels are kanji: 稼働, 完了, 待機, 警告. A blocked agent turns into an orange-and-black hazard frame with a blinking 警告 WARNING. All art is original vector work, with no logos, characters or screenshots from any show.
 
 ![EVA HUD](preview.png)
 
 ## What you see
 
-Palette (also in every mod's `eva.js`): ink `#0a0a0a`, deep `#160e24`, slab `#1a1128`, purple `#6b3fa0`, orange `#ff6a00`, green `#8fd14f`, red `#e0002a`, white `#f2f2f2`, text `#e8e4f0`, muted `#b8aed0`, dim `#7d7590`. Titles use Hiragino Mincho ProN at weight 700. Numbers and codes use JetBrains Mono. Labels are weight-700 caps.
+Palette (also in every mod's `eva.js`): ink `#0a0a0a`, deep `#160e24`, slab `#1a1128`, purple `#6b3fa0`, orange `#ff6a00`, green `#8fd14f`, red `#e0002a`, white `#f2f2f2`, text `#e8e4f0`, muted `#b8aed0`, dim `#7d7590`, and lilac `#e6dcf5` for text on a selected plate. Titles use Hiragino Mincho ProN at weight 700. Readouts use Digital-7 Mono (in `mods/eva-agents/fonts/`, by Sizenko Alexander of Style-7, freeware for non-commercial use); codes use JetBrains Mono. Labels are weight-700 caps.
 
 - **Window background:** `mods/eva-chrome/wallpaper.png`, a 3840×2160 PNG, fit `cover`. Base `#07060b`, a 160px purple grid at 32% opacity, four nested sets of 14 wobbly purple contour loops (30% to 89% opacity), three orange target reticles (`TGT-01`, `TGT-02`, `OBS`) joined by a dashed line, and orange `E139.xx` / `N35.xx` coordinate labels along the edges. Dividers between regions are 1px `#ff6a0066`.
-- **Sidebar, left, 268px,** background `#0f0a189e` (62%) so the map shows through.
-  - **Brand row, 46px** (`eva-chrome`): 牧者 in 19px Mincho white, then `HERDR` in 10px orange caps. Search and sidebar-toggle buttons are orange icons. The row has a `#ff6a0059` bottom border and drags the window.
-  - **Spaces** (`eva-spaces`): a 56px title row holding 作業区画 (26px Mincho white), `SPACES` (10.5px orange), and an orange `+`. Under it is a 1.5px orange underline that kinks up at its right end.
+- **Command deck, 156px** (`eva-chrome` with `command: true`), background `#0f0a189e`, a 2px purple bottom border and a 5px purple `pattern_slash` band under it.
+  - **Warning strip, 18px:** `deep` with a 1px red bottom rule and red 10px caps (`HERDR / COMMAND INTERFACE`, the active space, `自律運転 / AUTONOMOUS OPERATION`). While any agent is blocked it turns solid red with ink text and reads `人間の判断が必要 / ACTION REQUIRED`.
+  - **Title:** 中央管制 in 43px white Mincho at weight 900, `汎用作業支援システム / CONTROL 01` in 9px orange mono above, a green bar and `MULTI-AGENT OPERATIONS` in green below.
+  - **Status diagram:** 316px, three `#0f0a18` cells with 50px Digital-7 counts: ACTIVE green, HOLD red when non-zero (else dim), STANDBY orange. Show the registered total once above the diagram.
+  - **Signal field:** fit it to the available body height, measured with `on_size_change`. Render it as 24 orange and 24 `#9a6bd6` native vector strands. Each layer is 2.6 field widths long and starts half a width before the field, so no strand end ever shows. Move the two clipped containers in opposite directions with native `left` loops (42 and 57 seconds, there and back). The loop's `id` includes the field width, so a resize restarts it with new bounds. Label the field `SCHEMATIC`; it does not represent measured telemetry. Clicking the field toggles `shared("eva.signal")`; held, it stands still and reads `SCHEMATIC / HOLD`. Use a compact 248px diagram below 800px. Hide the title below 1150px and the signal field below 560px of deck width to preserve the diagram.
+- **Sidebar, left, 304px,** background `#0f0a189e` (62%). Give Spaces 40% and Agents 60% of the list area.
+  - **Brand row, 46px** (`eva-chrome`): 牧者 in 23px Mincho white, then `HERDR` in 10px orange caps. Search and sidebar-toggle buttons are orange icons. The row has a `#ff6a0059` bottom border and drags the window.
+  - **Spaces** (`eva-spaces`): a 56px title row holding 作業区画 (30px Mincho white), `SPACES` (10.5px orange), and an orange `+`. Under it is a 1.5px orange underline that kinks up at its right end.
     - Rows are 50px (worktree rows 30px). Line one is the name in 13px bold caps, then a status label. Line two is the repo/branch in 11px mono, with green `↑n` and red `↓n`, or `NO REPO`.
-    - The active space is a purple plate with 10px cuts on both right corners and a 4px orange bar on the left, with white text.
-    - Other rows are transparent with a `#6b3fa066` bottom divider and muted text.
-  - **Agents** (`eva-agents`): the title row reads 稼働体 `AGENTS`, styled like Spaces, plus the sort button. Section headers (`WORKING 1`, `NEEDS YOU`, `PINNED`) are 10.5px bold caps in the status color. Each agent is a card the width of the list minus 22px, 8px apart, with 14px cuts on both right corners:
-    - **Normal:** 66px, fill `#110c1acc`, 1px `#6b3fa0aa` outline.
-    - **Focused:** 92px, fill `#160e24f0`, 1.5px orange outline.
-    - **Blocked:** 92px, hazard frame (orange `pattern_slash` stripes 5px wide every 12px on ink), a 5px inset `#120808` panel, and 警告 (24px Mincho red) plus `WARNING` (14px orange) in place of the number.
-    - **Top line:** program icon, `SPACE · DETAIL` in 12px bold caps (white, or muted when idle), the machine name for remote agents, the sub-agent fold, then the status label.
-    - **Readout:** `SYNC RATE` (9.5px orange), the rate as `000.0` in mono (26px focused, 14px otherwise) and `%`. The colour is green above 50, orange above 20 and red below; `---.-` in dim means unknown. Right of it is `T+4m` in mono dim (the time since the agent's state last changed), or the pin button while hovered.
-    - **Gauge:** ten cells, 9px tall (6px on normal cards), filled to `round(rate / 10)` in the readout color. Empty cells are outlined at 33% of that color.
-  - **Footer, 69px** (`eva-chrome` with `footer: true`): `SETTINGS` and `ADD MACHINE` in 11.5px bold caps, under a `#ff6a0059` top border.
+    - The active space is a purple plate with 10px cuts on both right corners and a 4px orange bar on the left, with white text and lilac branch text.
+    - Other rows are transparent with a `#6b3fa0cc` bottom divider, a `#6b3fa040` hover and muted text.
+  - **Agents** (`eva-agents`): the title row reads 稼働体 `AGENTS`, 32px Mincho white, plus the sort button. Priority section headers (`警告`, `完了`, `稼働`, `待機`, `固定` for pinned) are 13px Mincho in the status color with a count; grouped-by-space headers are 10.5px bold caps. Each agent is a card the width of the list minus 22px, 8px apart, with 14px cuts on both right corners:
+    - **Normal:** 112px, fill `#110c1acc`, 1px `#6b3fa0aa` outline.
+    - **Focused or working:** 152px. Focused: fill `#1c1230f0`, 1.5px orange outline. Working: fill `#110c1acc`, 1px outline.
+    - **Blocked:** 152px, hazard frame (orange `pattern_slash` stripes 5px wide every 12px on ink), a 5px inset `#120808` panel. 警告 (Mincho red, 62% of the number size) plus `WARNING` (11px orange) blink in place of the number, and the 同調率 label hides.
+    - **Content column,** inset 14px left and 22px right: the program icon, the project name in 12px bold caps (white, or muted when idle), the sub-agent fold, and elapsed time or hover pin. Then the tab name, optional remote machine, and the status tags: 13px Mincho on 20px tags, the current one filled in its status color. All four show when the column is at least 280px wide; otherwise only the current one.
+    - **Readout:** 同調率 (12px Mincho white) over `SYNC RATE` (8px orange), then the rate as `000.0` in Digital-7 Mono and `%`. The number is at most 60px on tall cards and 32px on normal ones, and never taller than its row. The label sits left of the number when that costs the number nothing, above it on tall cards otherwise, and is dropped on short narrow cards. The colour is green above 50, orange above 20 and red below; `---.-` in dim means unknown.
+    - **Gauge:** ten cells, 9px tall (6px on normal cards), at the bottom of the column, filled to `round(rate / 10)` in the readout color. Empty cells are outlined at 33% of that color.
+    - **Sub-agents:** a 24px cut-corner plate under the parent, behind 1px purple tree lines, led by the program icon, the name in 11px bold caps and the status glyph. The peeked sub-agent gets the focused colors.
+  - **Footer, 114px** (`eva-chrome` with `footer: true`): a 37px seven-segment local clock above `SETTINGS` and `ADD MACHINE` in 11.5px bold caps, under a `#ff6a0059` top border.
 - **Tab bar, 42px** (`eva-tabs`), background `#0f0a189e`, with a `#ff6a0080` bottom border. Tabs are 168×30 plates aligned to the bottom edge, 6px apart, with a 10px cut on the top-right corner.
   - The active tab is a purple fill with a 3px orange bar along its top. Others are 1px purple outlines that tint `#6b3fa033` on hover.
   - Inside: the position as `01` in bold mono orange, the name in 12px bold caps (truncated), a green spinner while working, a 7px orange or white square for blocked or done, and the close × on the active tab.
   - `+` is orange. `FILES` / `CHANGES` are square 11px bold caps buttons with a purple outline, or a purple fill and orange outline when open.
-- **Panes** (`main`): transparent frame, 1px `#6b3fa0aa` border, 1px orange when focused, radius 0, 10px gaps. The work area has 10px padding. Terminals are padded 12px and drawn at `terminal_opacity` 0.55.
+- **Panes** (`main`): transparent frame, 1px `#6b3fa0aa` border, 1px orange (`accent`) when focused, radius 0, 8px gaps. The work area has 8px padding. Terminals are padded 12px and drawn at `terminal_opacity` 0.55, which shows as about 80%.
   - **Header, 30px** (`eva-pane`): a `#0a0a0acc` strip with a 1px bottom border (`#ff6a0059` focused, `#6b3fa066` otherwise).
   - On the left is a slab 40% of the pane's width, clamped to 260–480px, whose right edge slants 18px down to the left. It is orange when focused, `#1a1128` otherwise. On it: `PANE 01` in bold mono (ink, or orange when unfocused), the program icon, the program in bold caps, and the folder in caps (home shortened to `~`).
-  - On the right: `ACTIVE` or `COMPLETE` labels, or the blinking WARNING, then split, zoom and close icons in orange on hover.
+  - On the right: `稼働` or `完了` labels, or the blinking 警告, then split, zoom and close icons in orange on hover.
 - **Status bar, 28px** (`eva-status`), background `#0f0a189e`, with a `#ff6a0080` top border. All text is 10.5px bold caps.
   - Left: a purple-outlined chip with the machine (`THIS COMPUTER`), then the branch in dim.
   - Right: `AGENTS 01` (green outline on ink, count in mono), a blinking hazard chip `N NEEDS YOU` while any agent is blocked, `MOTION ON` / `MOTION OFF`, and the palette key hint `⌘⇧P  COMMANDS`.
 - **Files and Changes panels** (`eva-files`, `eva-changes`): a 368px hidden column with background `#0f0a18e6`. Each panel is square-cornered, filled `#0a0a0ae0`, with a 1px `#6b3fa0aa` border. Headers read 資料 `FILES` and 変更 `CHANGES` (20px Mincho plus a 10px orange caption). Rows, the file count chip, the commit input and the `COMMIT` button are square.
-- **Theme** `themes/eva.json`: terminal background `#0a0a0a`, foreground `#e8e4f0`, selection `#3b2560`, cursor `#ff6a00`. The ANSI colors lean purple, orange and green.
+- **作戦開始 card** (`eva-launch`): a full-window overlay, `#0a0a0aeb` over everything. Two white-and-ink hazard bands (22px, `pattern_slash` 5px every 12px) slide in from opposite sides in 320ms. Two 2px white rules grow from the centre to 60% of the width, and 作戦開始 fades in between them: white Mincho at weight 900, 20% of the window height (at most 13% of its width). Under it are `OPERATION START` in white bold caps and, in muted mono, the program, space and pane (`CLAUDE CODE  /  HERDR-LAYOUT-EVA  /  PANE 01`). It holds 1.15 seconds, fades out over 300ms and closes itself. A click closes it sooner.
+- **Theme** `themes/eva.json`: terminal background `#0a0a0a`, foreground `#e8e4f0`, selection `#3b2560`, cursor `#ff6a00`. ANSI: `#141019`, `#e0002a`, `#8fd14f`, `#ffb000`, `#5b8cff`, `#9a6bd6`, `#3fd0c9`, `#d8d2e4`, then bright `#4a4258`, `#ff3355`, `#b4ef7a`, `#ffd060`, `#8fb0ff`, `#c39cf0`, `#7fe8e2`, `#ffffff`. Yellow stays yellow, not orange, so it reads apart from red.
   - Panel colors: canvas `#07060b`, chrome `#0f0a18`, surface `#110c1a`, popover `#120c1c`, raised `#1b1328`, hover `#24183a`, selected `#6b3fa0`, border `#3a2a55`, input `#4a3670`.
-  - Accent and solid are orange with ink text. Status colors: working green, blocked orange, done white, idle and unknown dim.
+  - Accent and solid are orange with ink text. Status colors: working green, blocked red, done white, idle and unknown dim.
   - Herdr's own palette, picker, menus and dialogs pick these up without any mod.
 
 ## How it behaves
 
-- **Status labels** everywhere: working shows `ACTIVE` (green outline; filled green on the focused agent's card and on the active space's row), done shows `COMPLETE` (white), idle shows `STANDBY` (dim). Blocked shows the hazard-framed `WARNING`, which fades between 35% and 100% opacity every 900ms.
-- **MOTION** in the status bar toggles `shared("eva.motion")`. Off, every WARNING stops blinking and stays fully drawn. Nothing else animates except Herdr's own spinners.
-- **SYNC RATE** refreshes every 15 seconds for each local agent. Claude Code, Codex and OpenCode are read; any other agent shows `---.-`. A fresh OpenCode shows `---.-` until its first reply.
+- **Status labels** in the sidebar and pane headers are 11px Mincho kanji: working shows `稼働` (green outline; filled green on the active space's row), done shows `完了` (white), idle shows `待機` (dim). Blocked shows the hazard-framed `警告`, which fades between 35% and 100% opacity every 900ms. The command deck and status bar keep English (`ACTIVE` / `HOLD` / `STANDBY`, `N NEEDS YOU`) as the system's own voice.
+- **MOTION** in the status bar toggles `shared("eva.motion")`. Off, every WARNING stops blinking and stays fully drawn. The signal field stops moving too.
+- **Signal field:** click it to hold it still or set it moving again (`shared("eva.signal")`, kept across restarts). Held, it returns to its start position: a native loop can't pause mid-way. Native animation runs only while drawn; no JavaScript redraw timer drives the waves. The footer clock refreshes once per second.
+- **SYNC RATE** refreshes every 15 seconds for each local agent. Claude Code, Codex and OpenCode are read; any other agent shows `---.-`. A fresh OpenCode shows `---.-` until its first reply. For Claude Code, setting `autoCompactWindow` in `~/.claude/settings.json` changes the window the rate is measured against.
+- **作戦開始:** `eva-agents` opens `eva-launch` once for each new top-level agent: not for sub-agents (terminals with a `parent`), not while MOTION is off, and not for agents it sees in its first 3 seconds after loading, which were already running.
 - **Spaces:** click to select, drag to reorder within a machine, right-click for the menu, `+` for a new space.
-- **Agents:** click a card to focus its pane. Clicking the program icon folds or unfolds its sub-agents. Hovering swaps `T+…` for a pin button. The sort button switches between Priority and Grouped by space.
+- **Agents:** click a card to focus its pane. The chevron in the name row folds or unfolds its sub-agents. Hovering swaps `T+…` for a pin button. The sort button switches between Priority and Grouped by space.
 - **Tabs:** click to select, double-click to rename, drag to reorder, scroll the wheel to switch, right-click for the menu. The × closes the active tab.
 - **Pane headers:** click to focus. Hover to show split right, split down, zoom and close.
 - **Palette hint:** clicking it opens the palette bound under `layout:eva` in keys.json (`mod.open:<a palette mod>`) if there is one, else Herdr's `app.palette`.
@@ -56,9 +65,9 @@ Palette (also in every mod's `eva.js`): ink `#0a0a0a`, deep `#160e24`, slab `#1a
 - `layouts/eva.json`: a root row of `sidebar` and `work`, as in the shipped `main`.
   - The root sets `theme: eva`, `preview: layouts/eva.png`, `titlebar: none`, `traffic_lights: [12, 16]`, `background: {image: "mods/eva-chrome/wallpaper.png", fit: "cover"}`, `terminal_opacity: 0.55`, `terminal_padding: [12, 12]` and the 1px `#ff6a0066` divider.
   - `sidebar` is a column of `brand`, `sidebar-lists` (`spaces`, `agents`) and `sidebar-footer`.
-  - `work` is a column of `tabs`, a `work-body` row and `status`. `work-body` holds `main` and the hidden `panel` stack of `files` and `changes`. The sidebar, tabs and status nodes carry the `#0f0a189e` background; the mods draw none of their own.
-  - The `main` pane frame is `{gap: 10, radius: 0, background: "#00000000", lone: true, border: {1, "#6b3fa0aa"}, focus: {1, "accent"}, header: {mod: "eva-pane", height: 30, position: "top", reveal: "always"}}`.
-- **The mods** are `mod.clone`s of Herdr 0.1.12's `tabs`, `pane`, `workspace-chrome`, `workspace-status`, `spaces`, `agents`, `files` and `changes`. Their behavior (clicks, drags, menus, pins, folding) is unchanged; their drawing is replaced.
+  - `work` is a column of `command`, `tabs`, a `work-body` row and `status`. `work-body` holds `main` and the hidden `panel` stack of `files` and `changes`. The sidebar, tabs and status nodes carry the `#0f0a189e` background, the panel `#0f0a18e6`; the command deck draws its own.
+  - The `main` pane frame is `{gap: 8, radius: 0, background: "#00000000", lone: true, border: {1, "#6b3fa0aa"}, focus: {1, "accent"}, header: {mod: "eva-pane", height: 30, position: "top", reveal: "always"}}`.
+- **The mods** are `mod.clone`s of Herdr 0.1.12's `tabs`, `pane`, `workspace-chrome`, `workspace-status`, `spaces`, `agents`, `files` and `changes`. Their behavior (clicks, drags, menus, pins, folding) is unchanged; their drawing is replaced. `eva-launch` is new: `place: none`, opened with `openOverlay({mod: "eva-launch", kind: "window", width: 1, height: 1, at: {x: 0, y: 0}, frame: "none", props: {name, program, pane}})`.
 - **`eva.js`**, identical in every mod (mods import only from their own folder), exports the palette `C`, `MINCHO`, `MONO`, the `LABEL` / `TONE` status maps, and these helpers:
   - `motion()` and `toggleMotion()`.
   - `cut(w, h, {tl, tr, br, bl})`: a polygon with 45° corner cuts.
@@ -74,6 +83,7 @@ Palette (also in every mod's `eva.js`): ink `#0a0a0a`, deep `#160e24`, slab `#1a
   - **OpenCode:** only `opencode` processes that aren't `serve`. Open `~/.local/share/opencode/opencode.db` with `sqlite3 -readonly -json` and query both schemas separately: v2's `session_v2` + `session_message` (type `assistant`, `data.model.{providerID,id}`) and v1's `session` + `message` (`data.role` `assistant`, `data.providerID` / `modelID`). Take the newest top-level session in the agent's cwd updated since the process started (from `ps -o etime`). Used is `tokens.input + tokens.cache.read + tokens.cache.write`. The window is `.[provider].models[model].limit.context` from `~/.cache/opencode/models.json` via `jq`.
 - **Runs programs:** `eva-spaces` keeps the shipped `git` and `hc machine ls` calls. `eva-agents` runs `pgrep`, `ps`, `lsof`, `grep`, `tail`, `sqlite3` and `jq` every 15 seconds. It reads only token counts and session ids from the files above. Nothing reaches the network.
 - Icons load from the shipped mods' folders (`mods/workspace-chrome/`, `mods/pane/`, `mods/files/`, `mods/changes/`). The shipped `menu`, `new-menu`, `picker` and palette are used as they are.
+- **`layouts/eva.png`**, the Settings → Look poster, is rendered from `scripts/preview.svg` (a 320×200 viewBox) with `rsvg-convert -w 1280 -h 800 scripts/preview.svg -o layouts/eva.png`.
 - `tests/sync.test.js` covers the parsers with Vitest, aliasing `herdr` to `tests/herdr-stub.js` (`vitest.config.mjs`).
 
 ## Watch out
@@ -84,13 +94,18 @@ Palette (also in every mod's `eva.js`): ink `#0a0a0a`, deep `#160e24`, slab `#1a
 - `herdr` exports its own `window()`. The drawing window is gpui-kit's global: call `globalThis.window.paint_path`.
 - Path points are px relative to the element, or `"n%"`. There is no calc, so a cut corner on a flexible-width element needs its width from `on_size_change`.
 - `.loop()` animates only opacity, position and size, and not a painted path directly: wrap it in a `div` with an `.id`.
+- `.bg()` accepts a color, not a `Background.pattern_slash` object. Pass patterns through `fill()` / `paint_path`. Check the command-deck branch explicitly: a default chrome check renders only the brand row.
 - In the cloned `spaces`, the row code had a local `const fill`, a color string. Remove it, or it shadows `eva.js`'s `fill()` and the active row throws.
 - macOS `pgrep` skips its own ancestors. Testing the agent lookup from a shell inside that agent finds nothing; test from another terminal or from the mod.
 - OpenCode v2 (Homebrew `opencode-v2`) writes through an `opencode serve --service` process into the same database file but different tables. Querying only v1 shows `---.-` forever.
 - Two OpenCode agents in the same folder show the same rate: the database doesn't record which process wrote a session. Two fresh Codex agents in one folder have the same problem.
 - Hiragino Mincho ProN ships only with macOS. Elsewhere the titles fall back to the system font. Put a `.ttf`/`.otf` in a mod's `fonts/` folder and change `MINCHO` in every `eva.js` to change it.
 - `T+…` comes from `eva-agents`' own `localStorage`. On first run every agent is stamped "now".
-- The status labels only show while an agent is working, done or blocked, which is usually when nobody is looking. Idle agents show `STANDBY` on cards and space rows, and nothing in the pane header.
+- The status labels only show while an agent is working, done or blocked, which is usually when nobody is looking. Idle agents show `待機` on cards and space rows, and nothing in the pane header.
+- A moving layer only as long as field width plus travel shows its strand ends whenever the loop's bounds go stale. A loop keeps the `from`/`to` it started with until its `id` changes, so a resize leaves it running on the old width. Give the layer margin on both sides and put the width in the `id`.
+- An overlay `width`/`height` of at most 1 is a share of the window; px larger than the window don't fill it. A `dialog` is kept inside a margin and takes the keyboard. A `window` at `{x: 0, y: 0}` with `width: 1, height: 1` covers the whole window and leaves the keyboard alone.
+- `on_size_change` reports unzoomed px, while px sizes and offsets are scaled by `zoom`. Centre full-window content with flex, not with half the reported width.
+- A render has a time budget. Over it, Herdr keeps the last good frame under a "could not be re-rendered … Interrupted" banner. The signal field rebuilds every strand on each deck render: 48 strands of 241 points went over it on a wide window; 121 points each stays under and still looks smooth.
 - The clones track Herdr 0.1.12; a newer Herdr may need its changes merged in.
 - Herdr doesn't notice edits behind a symlinked mod or layout. Copy files in; don't link them.
 
@@ -117,9 +132,10 @@ Run these from a clone of this repo.
 
 ## Done when
 
-- `herdr-app check` passes for all eight `eva-*` mods.
+- `herdr-app check` passes for all nine `eva-*` mods.
 - `herdr-app status` shows `"errors": []` after `layout.switch {"name": "eva"}`.
 - `bunx --bun vitest run` passes (9 tests).
-- A screenshot shows the topo map behind the sidebar and between panes, the purple cut-corner active tab and active space, the orange slanted header on the focused pane, and Mincho section titles.
+- A screenshot shows the command deck with a red-ruled strip, the moving orange/purple schematic and large agent counts, SYNC RATE cards, a purple active tab and space with orange edges, an orange-outlined focused card, an orange focused pane header, and white Mincho section titles.
+- Starting a new agent plays the 作戦開始 card over the whole window once; restarting Herdr with agents already open plays nothing.
 - A local Claude Code agent's card shows a SYNC RATE within 2 points of 100 minus the used percent in its `/context`.
-- An agent waiting for permission shows the hazard card, a WARNING in its pane header and space row, and `1 NEEDS YOU` in the status bar. `MOTION OFF` stops the blinking.
+- An agent waiting for permission shows the hazard card, a 警告 in its pane header and space row, a solid red deck strip, and `1 NEEDS YOU` in the status bar. `MOTION OFF` stops the blinking and signal-field movement; clicking the field holds it alone.
