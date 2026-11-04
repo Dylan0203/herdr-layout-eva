@@ -182,7 +182,7 @@ export default class Changes extends View {
         if (e.key === "escape" && this.typing) { this.typing = false; this.handle.focus(); cx.stop_propagation(); cx.notify(); }
       })
       .child(h_flex().h(42).flex_none().px(14).gap(8).items_center().border_b(1).border_color("#f5b44b59")
-        .child(h_flex().gap(8).items_end().child(div().font_family(MINCHO).font_weight(700).text_size(20).text_color(C.white).child("変更")).child(div().pb(2).text_size(10).font_weight(700).text_color(C.orange).child("CHANGES")))
+        .child(h_flex().gap(8).items_end().child(div().font_family(MINCHO).font_weight(700).text_size(20).line_height(1).mb(-2).text_color(C.white).child("変更")).child(div().text_size(10).line_height(1).font_weight(700).text_color(C.orange).child("CHANGES")))
         .child(div().px(5).py(1).border_1().border_color(C.purple).text_size(10).text_color(t.muted).child(`${this.files.length} files`))
         .child(div().flex_1()).child(div().text_size(11).text_color(t.ansi2).child(`+${add}`)).child(div().text_size(11).text_color(t.ansi1).child(`−${del}`)))
       .child(v_flex().id("changes-list").flex_none().h(Math.min(200, Math.max(44, this.files.length * 28 + 12))).overflow_y_scrollbar().p(6).border_b(1).border_color(t.border).children(this.files.map((f) => {

@@ -432,8 +432,8 @@ export default class Spaces extends View {
       .child(h_flex().relative().h(collapsed ? 31 : 56).pl(14).pr(10).pt(collapsed ? 0 : 10).pb(collapsed ? 0 : 10).gap(8)
         .items_end().text_color(C.dim)
         .when(!collapsed, el => el
-          .child(div().font_family(MINCHO).font_weight(700).text_size(30).text_color(C.red).child("作業区画"))
-          .child(div().pb(4).text_size(10.5).font_weight(700).text_color(C.orange).child("SPACES"))
+          .child(div().font_family(MINCHO).font_weight(700).text_size(30).line_height(1).mb(-2).text_color(C.red).child("作業区画"))
+          .child(div().text_size(10.5).line_height(1).font_weight(700).text_color(C.orange).child("SPACES"))
           .child(div().absolute().left(14).right(14).bottom(4).h(10).child(line([[0, 9], [this.width - 46, 9], [this.width - 30, 0]], C.orange))))
         .child(div().flex_1())
         .child(div().id("space-new").size(26).flex_none().flex().items_center().justify_center().text_color(C.orange).hover(s => s.bg(t.hover).text_color(t.foreground))

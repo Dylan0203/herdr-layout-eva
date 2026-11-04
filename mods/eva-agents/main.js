@@ -532,8 +532,8 @@ export default class Agents extends View {
             .flex_none()
             .items_end()
             .gap(8)
-            .child(div().font_family(MINCHO).font_weight(700).text_size(32).text_color(C.red).child("稼働体"))
-            .child(div().pb(4).text_size(10.5).font_weight(700).text_color(C.orange).child("AGENTS"))
+            .child(div().font_family(MINCHO).font_weight(700).text_size(32).line_height(1).mb(-2).text_color(C.red).child("稼働体"))
+            .child(div().text_size(10.5).line_height(1).font_weight(700).text_color(C.orange).child("AGENTS"))
             .child(div().flex_1())
             .child(div().absolute().left(14).right(14).bottom(4).h(10).child(line([[0, 9], [this.width - 46, 9], [this.width - 30, 0]], C.orange)))
             .child(
