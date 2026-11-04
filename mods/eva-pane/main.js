@@ -75,7 +75,7 @@ export default class Pane extends View {
       .items_center()
       .bg("#0a0a0acc")
       .border_b(1)
-      .border_color(on ? "#f5b44b59" : "#436c3566")
+      .border_color(on ? "#ff6a0059" : "#6b3fa066")
       .text_size(12)
       .on_size_change((size, cx) => {
         if (Math.abs(size.width - this.width) < 1) return;

@@ -61,9 +61,9 @@ export default class Tabs extends View {
       const shape = cut(TAB_W, TAB_H, { tr: CUT });
       return h_flex().id(`tab-${c.id}`).relative().w(TAB_W).h(TAB_H).pl(10).pr(CUT + 4).gap(7).items_center().flex_none().text_size(12)
         .text_color(c.active ? "#ffffff" : t.muted)
-        .child(c.active ? fill(shape, C.violet) : stroke(shape, C.purple))
-        .when(c.active, el => el.child(div().absolute().top(0).left(0).w(TAB_W - CUT).h(3).bg(C.lime)))
-        .hover(s => s.bg(c.active ? "#00000000" : "#436c3533"))
+        .child(c.active ? fill(shape, C.purple) : stroke(shape, C.purple))
+        .when(c.active, el => el.child(div().absolute().top(0).left(0).w(TAB_W - CUT).h(3).bg(C.orange)))
+        .hover(s => s.bg(c.active ? "#00000000" : "#6b3fa033"))
         .on_mouse_down("left", (e, cx) => { cx.stop_propagation(); this.pressed = i; if (e.click_count === 2) run("tab.rename", { id: c.id }); })
         .on_mouse_up("left", () => {
           const from = this.pressed; this.pressed = null;
@@ -88,14 +88,14 @@ export default class Tabs extends View {
     const panelButton = (id, label, icon) => {
       const on = panel && !panel.hidden && body?.active === id;
       return h_flex().id(`panel-${id}`).h(26).px(8).gap(5).flex_none().items_center().rounded(0)
-        .text_size(11).font_weight(700).bg(on ? C.violet : "#00000000").text_color(on ? "#ffffff" : t.muted).border(1).border_color(on ? C.lime : C.purple)
+        .text_size(11).font_weight(700).bg(on ? C.purple : "#00000000").text_color(on ? "#ffffff" : t.muted).border(1).border_color(on ? C.orange : C.purple)
         .hover(s => s.bg(t.hover)).on_mouse_down("left", stop)
         .on_click(() => {
           if (on) run("layout.hide", { id: "panel" });
           else { run("layout.select", { stack: "panel-body", child: id }); run("layout.show", { id: "panel" }); }
         }).child(svg(icon).size(14)).child(label.toUpperCase());
     };
-    return h_flex().size_full().min_w(0).px(10).pl(lightsPadding).gap(3).items_center().border_b(1).border_color("#f5b44b80")
+    return h_flex().size_full().min_w(0).px(10).pl(lightsPadding).gap(3).items_center().border_b(1).border_color("#ff6a0080")
       .on_mouse_up("left", () => { this.pressed = null; })
       .on_scroll_wheel(e => { if (Math.abs(e.delta.y) >= 1) run(e.delta.y > 0 ? "tab.prev" : "tab.next"); })
       .child(h_flex().id("tab-scroll").flex_1().min_w(0).h_full().items_end().pb(0).gap(6).overflow_x_scrollbar().children(shown.map(item)))

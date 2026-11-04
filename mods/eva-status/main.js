@@ -37,7 +37,7 @@ export default class EvaStatus extends View {
     const needs = list.filter((a) => a.status === "blocked").length;
     const chip = (icon, text) => h_flex().h(18).px(8).gap(6).items_center().border(1).border_color(C.purple)
       .child(svg(`mods/workspace-chrome/${icon}.svg`).size(12)).child(text.toUpperCase());
-    return h_flex().size_full().px(12).gap(10).items_center().border_t(1).border_color("#f5b44b80")
+    return h_flex().size_full().px(12).gap(10).items_center().border_t(1).border_color("#ff6a0080")
       .text_size(10.5).font_weight(700).text_color(C.muted)
       .child(chip(space?.machine ? "server" : "monitor", space?.machine ?? "This computer"))
       .when(Boolean(space?.branch), (el) => el.child(h_flex().gap(6).items_center().text_color(C.dim)

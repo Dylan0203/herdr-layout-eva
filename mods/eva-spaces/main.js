@@ -354,9 +354,9 @@ export default class Spaces extends View {
       .justify_center()
       .gap(3)
       .when(on, (el) => el
-        .child(fill(cut(this.width - 16, rowHeight({ tree }), { tr: 10, br: 10 }), C.violet))
-        .child(div().absolute().left(0).top(0).bottom(0).w(4).bg(C.lime)))
-      .when(!on, (el) => el.border_b(1).border_color(C.violet + "cc").hover((s) => s.bg(C.violet + "40")))
+        .child(fill(cut(this.width - 16, rowHeight({ tree }), { tr: 10, br: 10 }), C.purple))
+        .child(div().absolute().left(0).top(0).bottom(0).w(4).bg(C.orange)))
+      .when(!on, (el) => el.border_b(1).border_color(C.purple + "cc").hover((s) => s.bg(C.purple + "40")))
       .when(this.pressed === i && this.over !== i, (el) => el.opacity(0.5))
       .when(this.pressed !== null && this.over === i && this.pressed !== i, (el) => el.child(
         div().absolute().left(0).right(0).h(2).bg(t.accent)
@@ -432,7 +432,7 @@ export default class Spaces extends View {
       .child(h_flex().relative().h(collapsed ? 31 : 56).pl(14).pr(10).pt(collapsed ? 0 : 10).pb(collapsed ? 0 : 10).gap(8)
         .items_end().text_color(C.dim)
         .when(!collapsed, el => el
-          .child(div().font_family(MINCHO).font_weight(700).text_size(30).line_height(1).mb(-2).text_color(C.red).child("作業区画"))
+          .child(div().font_family(MINCHO).font_weight(700).text_size(30).line_height(1).mb(-2).text_color(C.white).child("作業区画"))
           .child(div().text_size(10.5).line_height(1).font_weight(700).text_color(C.orange).child("SPACES"))
           .child(div().absolute().left(14).right(14).bottom(4).h(10).child(line([[0, 9], [this.width - 46, 9], [this.width - 30, 0]], C.orange))))
         .child(div().flex_1())

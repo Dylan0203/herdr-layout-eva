@@ -177,11 +177,11 @@ export default class Changes extends View {
     if (key() !== this.context) this.refresh(cx);
     const t = theme(), add = this.files.reduce((n, f) => n + f.add, 0), del = this.files.reduce((n, f) => n + f.del, 0);
     const enabled = Boolean(this.message.trim() && this.root && !this.busy && !this.loading);
-    return v_flex().id("changes").size_full().min_h(0).overflow_hidden().bg("#0a0a0ae0").border_1().border_color("#436c35aa").text_color(t.foreground).text_size(13).track_focus(this.handle)
+    return v_flex().id("changes").size_full().min_h(0).overflow_hidden().bg("#0a0a0ae0").border_1().border_color("#6b3fa0aa").text_color(t.foreground).text_size(13).track_focus(this.handle)
       .on_key_down((e, cx) => {
         if (e.key === "escape" && this.typing) { this.typing = false; this.handle.focus(); cx.stop_propagation(); cx.notify(); }
       })
-      .child(h_flex().h(42).flex_none().px(14).gap(8).items_center().border_b(1).border_color("#f5b44b59")
+      .child(h_flex().h(42).flex_none().px(14).gap(8).items_center().border_b(1).border_color("#ff6a0059")
         .child(h_flex().gap(8).items_end().child(div().font_family(MINCHO).font_weight(700).text_size(20).line_height(1).mb(-2).text_color(C.white).child("変更")).child(div().text_size(10).line_height(1).font_weight(700).text_color(C.orange).child("CHANGES")))
         .child(div().px(5).py(1).border_1().border_color(C.purple).text_size(10).text_color(t.muted).child(`${this.files.length} files`))
         .child(div().flex_1()).child(div().text_size(11).text_color(t.ansi2).child(`+${add}`)).child(div().text_size(11).text_color(t.ansi1).child(`−${del}`)))

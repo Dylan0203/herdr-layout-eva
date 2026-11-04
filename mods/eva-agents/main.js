@@ -3,7 +3,7 @@
 
 import { View, div, image, svg } from "gpui-kit";
 import { v_flex, h_flex } from "gpui-base";
-import { agents, terminals, panes, focused, spaces, run, theme, shared, setShared, setAgentOrder, openOverlay, closeOverlay, props, window, layout, exec, appHome } from "herdr";
+import { agents, terminals, panes, focused, spaces, run, theme, shared, setShared, setAgentOrder, openOverlay, closeOverlay, props, window, layout } from "herdr";
 import { C, MINCHO, MONO, TONE, LABEL, cut, fill, stroke, line, hazard, blink } from "./eva.js";
 import { startSync, syncRate } from "./sync.js";
 
@@ -85,34 +85,6 @@ export default class Agents extends View {
     cx.timer.every(30000, (cx) => cx.notify());
     this.width = 304;
     startSync(cx);
-    // Unit art: mods/eva-agents/units/<program key>.png, one per agent program.
-    this.units = new Set();
-    cx.spawn(async (cx) => {
-      const { stdout } = await exec("ls", [`${appHome()}/mods/eva-agents/units`]);
-      this.units = new Set(stdout.split("\n").filter((f) => f.endsWith(".png")).map((f) => f.slice(0, -4)));
-      cx.notify();
-    });
-  }
-
-  // The unit in a window cropped to head and chest, where the vendor mark sits;
-  // scan-lined red while blocked. Without art, a dashed 未登録 window.
-  unit(a, uw, uh, idle, blocked) {
-    const key = a.program?.key;
-    const box = div().relative().w(uw).h(uh).flex_none().overflow_hidden().border(1);
-    if (!this.units.has(key)) {
-      return box.border_dashed().border_color(C.dim + "88")
-        .flex().flex_col().items_center().justify_center()
-        .font_family(MINCHO).font_weight(700).text_size(13).line_height(1.15).text_color(C.dim)
-        .children([..."未登録"].map((c) => div().child(c)));
-    }
-    // The art is a 1:2 bust, head at the top; slightly enlarged so the shoulders bleed.
-    const iw = Math.round(uw * 1.15);
-    return box.border_color(C.purple).bg(C.ink)
-      .child(image(`mods/eva-agents/units/${key}.png`).absolute().w(iw).h(iw * 2)
-        .left(Math.round((uw - iw) / 2)).top(0)
-        .when(idle, (el) => el.opacity(0.5)))
-      .when(blocked, (el) => el.children(Array.from({ length: Math.floor(uh / 3) }, (_, i) =>
-        div().absolute().left(0).right(0).top(i * 3).h(1).bg(C.red + "99"))));
   }
 
   // The lit status tab; with `all`, the four of them, unlit ones outlined.
@@ -222,18 +194,14 @@ export default class Agents extends View {
     });
   }
 
-  // A sub-agent: a slim cut-corner plate under its parent's card, led by its unit's head.
+  // A sub-agent: a slim cut-corner plate under its parent's card, led by its program icon.
   subRow(t, s, shown, compact) {
     const k = s.t;
     const st = kidStatus(k, this.listed);
     const on = k.address === shown;
     const plate = Math.max(this.width - 22, 120) - 18 - s.lines.length * 13;
     const shape = cut(plate, 24, { tr: 8 });
-    const key = k.program?.key;
-    const head = this.units.has(key)
-      ? div().relative().size(18).flex_none().overflow_hidden().bg(C.ink)
-        .child(image(`mods/eva-agents/units/${key}.png`).absolute().w(54).h(108).left(-18).top(0))
-      : icon(k.program, 14, t.foreground);
+    const head = icon(k.program, 14, t.foreground);
     return h_flex()
       .id(`sub-${k.address}`)
       .pl(18)
@@ -245,8 +213,8 @@ export default class Agents extends View {
         .when(Boolean(l), el => el.border_l(1).border_color(C.purple))
         .when(l === "└" || l === "├", el => el.border_b(1))))
       .child(h_flex().relative().w(plate).h(24).flex_none().px(6).gap(7).items_center()
-        .child(fill(shape, on ? "#1c1230f0" : "#10160fcc"))
-        .child(stroke(shape, on ? C.lime : "#436c35aa"))
+        .child(fill(shape, on ? "#1c1230f0" : "#110c1acc"))
+        .child(stroke(shape, on ? C.orange : "#6b3fa0aa"))
         .when(Boolean(head), el => el.child(head))
         .child(div().flex_1().min_w(0).truncate().text_size(11).font_weight(700).text_color(on ? C.white : C.muted)
           .child((k.name || k.template || k.program?.name || k.address).toUpperCase()))
@@ -278,13 +246,12 @@ export default class Agents extends View {
     const cells = rate == null ? 0 : Math.round(rate / 10);
     const frame = blocked
       ? [...hazard(shape), div().absolute().top(5).left(5).w(w - 10).h(h - 10).child(fill(cut(w - 10, h - 10, { tr: 11, br: 11 }), "#120808"))]
-      : [fill(shape, a.focused ? "#1c1230f0" : "#10160fcc"), stroke(shape, a.focused ? C.lime : "#436c35aa", a.focused ? 1.5 : 1)];
+      : [fill(shape, a.focused ? "#1c1230f0" : "#110c1acc"), stroke(shape, a.focused ? C.orange : "#6b3fa0aa", a.focused ? 1.5 : 1)];
     const since = div().flex_none().font_family(MONO).text_size(10).line_height(1).text_color(C.dim)
       .child(when ? `T+${duration(now - when)}` : "");
     const corner = this.hovered === a.address ? pin : since;
-    // The unit art names the program; only agents without art keep the small icon.
     const title = h_flex().h(18).flex_none().gap(7).items_center().min_w(0)
-      .when(Boolean(pic) && !this.units.has(a.program?.key), el => el.child(div().id(`agent-fold-${a.address}`)
+      .when(Boolean(pic), el => el.child(div().id(`agent-fold-${a.address}`)
         .when(subs.length > 0, el => el.on_click((_e, cx) => {
           cx.stop_propagation();
           this.folded.has(a.address) ? this.folded.delete(a.address) : this.folded.add(a.address);
@@ -324,9 +291,7 @@ export default class Agents extends View {
       .on_click(() => run("pane.focus", { pane: a.pane }))
       .children(frame);
     const g = big ? 9 : 6;
-    // The unit window takes the card's full height on the left; everything else stacks beside it.
-    const uw = Math.round(Math.min(98, Math.max(52, w * 0.25)));
-    const col = w - 36 - uw - 10;
+    const col = w - 36;
     const rh = inner - 18 - 20 - 15 - g;
     const fit = (label) => Math.floor((col - (label ? 54 : 0) - 17) / 2.5);
     const cap = Math.min(big ? 60 : 32, rh);
@@ -336,8 +301,7 @@ export default class Agents extends View {
     const above = !blocked && !label && big;
     const size = Math.min(cap, fit(label), above ? rh - 15 : Infinity);
     return card
-      .child(div().absolute().left(14).top(10).child(this.unit(a, uw, inner, idle, blocked)))
-      .child(v_flex().absolute().left(14 + uw + 10).right(22).top(10).bottom(12).gap(3)
+      .child(v_flex().absolute().left(14).right(22).top(10).bottom(12).gap(3)
         .child(title.child(corner))
         .child(h_flex().h(20).flex_none().gap(8).items_center().min_w(0)
           .child(detail).when(Boolean(machine), el => el.child(host))
@@ -514,7 +478,7 @@ export default class Agents extends View {
       .size_full()
       .min_h(0)
       .border_t(1)
-      .border_color("#f5b44b59")
+      .border_color("#ff6a0059")
       .text_size(13)
       .on_size_change((size, cx) => {
         if (Math.abs(size.width - this.width) < 1) return;
@@ -532,7 +496,7 @@ export default class Agents extends View {
             .flex_none()
             .items_end()
             .gap(8)
-            .child(div().font_family(MINCHO).font_weight(700).text_size(32).line_height(1).mb(-2).text_color(C.red).child("稼働体"))
+            .child(div().font_family(MINCHO).font_weight(700).text_size(32).line_height(1).mb(-2).text_color(C.white).child("稼働体"))
             .child(div().text_size(10.5).line_height(1).font_weight(700).text_color(C.orange).child("AGENTS"))
             .child(div().flex_1())
             .child(div().absolute().left(14).right(14).bottom(4).h(10).child(line([[0, 9], [this.width - 46, 9], [this.width - 30, 0]], C.orange)))

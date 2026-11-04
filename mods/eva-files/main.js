@@ -159,8 +159,8 @@ export default class Files extends View {
   render(cx) {
     if (key() !== this.context?.key) this.refresh(cx);
     const t = theme();
-    return v_flex().id("files").size_full().min_h(0).overflow_hidden().bg("#0a0a0ae0").border_1().border_color("#436c35aa").text_color(t.foreground).text_size(13)
-      .child(h_flex().h(42).flex_none().px(14).gap(8).items_center().border_b(1).border_color("#f5b44b59")
+    return v_flex().id("files").size_full().min_h(0).overflow_hidden().bg("#0a0a0ae0").border_1().border_color("#6b3fa0aa").text_color(t.foreground).text_size(13)
+      .child(h_flex().h(42).flex_none().px(14).gap(8).items_center().border_b(1).border_color("#ff6a0059")
         .when(Boolean(this.file), el => el.child(div().id("files-back").w(20).cursor_pointer().text_color(t.muted).on_click((_e, cx) => { this.show(null); cx.notify(); }).child("←")))
         .child(h_flex().gap(8).items_end().child(div().font_family(MINCHO).font_weight(700).text_size(20).line_height(1).mb(-2).text_color(C.white).child("資料")).child(div().text_size(10).line_height(1).font_weight(700).text_color(C.orange).child("FILES")))
         .child(div().flex_1().min_w(0).truncate().text_right().text_size(12).text_color(t.dim).child(this.file ?? this.root?.split(/[\\/]/).pop() ?? "")))

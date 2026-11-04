@@ -19,7 +19,7 @@
   ],
   "divider": {
     "width": 1,
-    "color": "#78994966"
+    "color": "#ff6a0066"
   },
   "children": [
     {
@@ -30,7 +30,7 @@
       },
       "min": 44,
       "max": 480,
-      "background": "#0b100af5",
+      "background": "#0f0a189e",
       "resizable": false,
       "children": [
         {
@@ -112,7 +112,7 @@
             "px": 42
           },
           "window_drag": true,
-          "background": "#0b100af5",
+          "background": "#0f0a189e",
           "content": {
             "mod": "eva-tabs"
           }
@@ -135,7 +135,7 @@
                   "lone": true,
                   "border": {
                     "width": 1,
-                    "color": "#6b893b99"
+                    "color": "#6b3fa0aa"
                   },
                   "focus": {
                     "width": 1,
@@ -161,7 +161,7 @@
               },
               "min": 280,
               "max": 900,
-              "background": "#0b100af5",
+              "background": "#0f0a18e6",
               "children": [
                 {
                   "id": "panel-body",
@@ -194,7 +194,7 @@
           "size": {
             "px": 28
           },
-          "background": "#0b100af5",
+          "background": "#0f0a189e",
           "content": {
             "mod": "eva-status"
           }

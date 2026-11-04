@@ -5,20 +5,18 @@ import { shared, setShared } from "herdr";
 
 export const C = {
   ink: "#0a0a0a",
-  deep: "#101710",
-  slab: "#172017",
-  purple: "#436c35",
-  orange: "#f5b44b",
-  green: "#8cbe55",
-  red: "#ef492f",
-  white: "#ecebd5",
-  text: "#e6e5d3",
-  muted: "#b0b69b",
-  dim: "#78856b",
-  // Selection wears Unit-01's colors.
-  violet: "#4b2d78",
-  lime: "#9be83a",
-  lilac: "#d9cdf0",
+  deep: "#160e24",
+  slab: "#1a1128",
+  purple: "#6b3fa0",
+  orange: "#ff6a00",
+  green: "#8fd14f",
+  red: "#e0002a",
+  white: "#f2f2f2",
+  text: "#e8e4f0",
+  muted: "#b8aed0",
+  dim: "#7d7590",
+  // Text on a selected plate.
+  lilac: "#e6dcf5",
 };
 export const MINCHO = "Hiragino Mincho ProN";
 export const MONO = "JetBrains Mono";
