@@ -4,7 +4,7 @@
 import { View, div, image, svg } from "gpui-kit";
 import { v_flex, h_flex } from "gpui-base";
 import { agents, terminals, panes, focused, spaces, run, theme, shared, setShared, setAgentOrder, openOverlay, closeOverlay, props, window, layout } from "herdr";
-import { C, MINCHO, MONO, TONE, LABEL, cut, fill, stroke, line, hazard, blink } from "./eva.js";
+import { C, MINCHO, MONO, TONE, LABEL, cut, fill, stroke, line, hazard, blink, motion } from "./eva.js";
 import { startSync, syncRate } from "./sync.js";
 
 const DIGITAL = "Digital-7 Mono";
@@ -85,6 +85,25 @@ export default class Agents extends View {
     cx.timer.every(30000, (cx) => cx.notify());
     this.width = 304;
     startSync(cx);
+    this.announced = new Set();
+    this.bornAt = Date.now();
+  }
+
+  // 作戦開始 for each new top-level agent. Agents seen in the first seconds
+  // after load were already running, so they only get remembered.
+  announce(list, all) {
+    const settling = Date.now() - this.bornAt < 3000;
+    const parentOf = new Map(all.map(t => [t.address, t.parent]));
+    for (const a of list) {
+      if (this.announced.has(a.address)) continue;
+      this.announced.add(a.address);
+      if (settling || !motion() || parentOf.get(a.address)) continue;
+      const index = panes().filter(p => p.tab === a.tab).findIndex(p => p.pane === a.pane) + 1;
+      openOverlay({
+        mod: "eva-launch", kind: "window", width: 1, height: 1, at: { x: 0, y: 0 }, frame: "none",
+        props: { name: a.space_name, program: a.program?.name, pane: index || null },
+      });
+    }
   }
 
   // The lit status tab; with `all`, the four of them, unlit ones outlined.
@@ -326,6 +345,7 @@ export default class Agents extends View {
     let list = agents();
     this.listed = new Map(list.map((a) => [a.address, a.status]));
     const all = terminals();
+    this.announce(list, all);
     this.migratePins(all);
     const shown = focused()?.agent;
     const now = Date.now();
