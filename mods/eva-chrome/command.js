@@ -16,8 +16,8 @@ function signal(width, height) {
     const strands = [];
     for (let strand = 0; strand < 24; strand++) {
       // Strands run SPAN field widths, starting PAD before the field, so their ends stay hidden.
-      const points = Array.from({ length: 241 }, (_, i) => {
-        const x = i / 240 * SPAN;
+      const points = Array.from({ length: 121 }, (_, i) => {
+        const x = i / 120 * SPAN;
         return [x * w, height / 2 + Math.sin(x * Math.PI * 2 + phase + strand * 0.12) * height * 0.48];
       });
       strands.push(line(points, color + "b8", 0.7));

@@ -101,6 +101,7 @@ Palette (also in every mod's `eva.js`): ink `#0a0a0a`, deep `#160e24`, slab `#1a
 - `T+…` comes from `eva-agents`' own `localStorage`. On first run every agent is stamped "now".
 - The status labels only show while an agent is working, done or blocked, which is usually when nobody is looking. Idle agents show `待機` on cards and space rows, and nothing in the pane header.
 - A moving layer only as long as field width plus travel shows its strand ends whenever the loop's bounds go stale. A loop keeps the `from`/`to` it started with until its `id` changes, so a resize leaves it running on the old width. Give the layer margin on both sides and put the width in the `id`.
+- A render has a time budget. Over it, Herdr keeps the last good frame under a "could not be re-rendered … Interrupted" banner. The signal field rebuilds every strand on each deck render: 48 strands of 241 points went over it on a wide window; 121 points each stays under and still looks smooth.
 - The clones track Herdr 0.1.12; a newer Herdr may need its changes merged in.
 - Herdr doesn't notice edits behind a symlinked mod or layout. Copy files in; don't link them.
 
