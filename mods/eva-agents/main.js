@@ -7,6 +7,8 @@ import { agents, terminals, panes, focused, spaces, run, theme, shared, setShare
 import { C, MINCHO, MONO, cut, fill, stroke, line, hazard, badge } from "./eva.js";
 import { startSync, syncRate } from "./sync.js";
 
+const DIGITAL = "Digital-7 Mono";
+
 function find(node, id) {
   if (node?.id === id) return node;
   for (const child of node?.children ?? []) {
@@ -25,7 +27,7 @@ function toggleSidebar() {
   if (!narrow()) setShared("sidebar.width", width);
   // Mods edited before the rail went by width still read the flag.
   setShared("sidebar.collapsed", !narrow());
-  run("layout.resize", { id: "sidebar", px: narrow() ? (shared("sidebar.width") ?? 268) : window()?.platform === "macos" ? 76 : 44 });
+  run("layout.resize", { id: "sidebar", px: narrow() ? (shared("sidebar.width") ?? 304) : window()?.platform === "macos" ? 76 : 44 });
 }
 
 const clean = (s) => (s ?? "").replace(/^[^\p{L}\p{N}]+/u, "").trim();
@@ -80,7 +82,7 @@ export default class Agents extends View {
     if (!this.pendingPins.length) localStorage.removeItem("pins");
     this.migratingPins = new Set();
     cx.timer.every(30000, (cx) => cx.notify());
-    this.width = 268;
+    this.width = 304;
     startSync(cx);
   }
 
@@ -218,12 +220,11 @@ export default class Agents extends View {
     return div().size(7).mx(3).flex_none().rounded(4).bg(a.status === "done" ? color : t.dim + "00");
   }
 
-  // One agent as a HUD card: name, SYNC RATE (context window left) and a
-  // 10-cell gauge. Focused: orange frame, big number. Blocked: hazard frame.
   card(t, a, { name, more, pic, machine, subs, fold, pin, when, now, idle }) {
     const w = Math.max(this.width - 22, 120);
-    const big = a.focused || a.status === "blocked";
-    const h = big ? 92 : 66;
+    const big = a.focused || a.status === "working" || a.status === "blocked";
+    const h = big ? 152 : 112;
+    const digits = Math.min(big ? 54 : 32, Math.floor((w - (w >= 230 ? 105 : 54)) / 2.5));
     const shape = cut(w, h, { tr: 14, br: 14 });
     const rate = syncRate(a.address);
     const tone = rate == null ? C.dim : rate > 50 ? C.green : rate > 20 ? C.orange : C.red;
@@ -231,36 +232,41 @@ export default class Agents extends View {
     const cells = rate == null ? 0 : Math.round(rate / 10);
     const frame = a.status === "blocked"
       ? [...hazard(shape), div().absolute().top(5).left(5).w(w - 10).h(h - 10).child(fill(cut(w - 10, h - 10, { tr: 11, br: 11 }), "#120808"))]
-      : [fill(shape, a.focused ? "#160e24f0" : "#110c1acc"), stroke(shape, a.focused ? C.orange : "#6b3fa0aa", a.focused ? 1.5 : 1)];
-    const top = h_flex().gap(7).items_center().min_w(0)
-      .when(Boolean(pic), (el) => el.child(div().id(`agent-fold-${a.address}`)
-        .when(subs.length > 0, (el) => el.on_click((_e, cx) => {
-          cx.stop_propagation();
-          this.folded.has(a.address) ? this.folded.delete(a.address) : this.folded.add(a.address);
-          cx.notify();
-        })).child(pic)))
-      .child(div().flex_1().min_w(0).truncate().font_weight(700).text_size(12)
-        .text_color(idle ? C.muted : "#ffffff").child((more ? `${name} · ${more}` : name).toUpperCase()))
-      .when(Boolean(machine), (el) => el.child(div().text_size(10).text_color(C.dim).child(machine)))
-      .when(subs.length > 0, (el) => el.child(fold(a, subs)))
-      .when(a.status !== "blocked", (el) => el.child(badge(a.status, { filled: a.focused && a.status === "working" })));
-    const since = div().flex_none().font_family(MONO).text_size(10.5).text_color(C.dim)
-      .child(this.hovered !== a.address && when ? `T+${duration(now - when)}` : "");
-    const gauge = h_flex().gap(3).children(Array.from({ length: 10 }, (_, i) =>
-      div().flex_1().h(big ? 9 : 6).when(i < cells, (d) => d.bg(tone)).when(i >= cells, (d) => d.border(1).border_color(tone + "55"))));
-    const readout = a.status === "blocked"
-      ? h_flex().gap(8).items_end()
-          .child(div().font_family(MINCHO).font_weight(700).text_size(24).text_color(C.red).child("警告"))
-          .child(div().pb(3).font_weight(700).text_size(14).text_color(C.orange).child("WARNING"))
-          .child(div().flex_1())
-          .child(div().pb(3).font_family(MONO).text_size(11).text_color(C.muted).child(`${value}%`))
-          .child(div().pb(3).child(this.hovered === a.address ? pin : since))
-      : h_flex().gap(6).items_end()
-          .child(div().pb(big ? 4 : 1).text_size(9.5).font_weight(700).text_color(C.orange).child("SYNC RATE"))
-          .child(div().font_family(MONO).font_weight(700).text_size(big ? 26 : 14).text_color(tone).child(value))
-          .child(div().pb(big ? 4 : 1).font_family(MONO).text_size(big ? 14 : 10).text_color(tone).child("%"))
-          .child(div().flex_1())
-          .child(this.hovered === a.address ? pin : since);
+      : [fill(shape, a.focused ? "#101710f0" : "#10160fcc"), stroke(shape, a.focused ? C.green : "#436c35aa", a.focused ? 1.5 : 1)];
+    const since = div().flex_none().font_family(MONO).text_size(10).line_height(1).text_color(C.dim)
+      .child(when ? `T+${duration(now - when)}` : "");
+    const top = v_flex().gap(3)
+      .child(h_flex().h(18).flex_none().gap(7).items_center().min_w(0)
+        .when(Boolean(pic), el => el.child(div().id(`agent-fold-${a.address}`)
+          .when(subs.length > 0, el => el.on_click((_e, cx) => {
+            cx.stop_propagation();
+            this.folded.has(a.address) ? this.folded.delete(a.address) : this.folded.add(a.address);
+            cx.notify();
+          })).child(pic)))
+        .child(div().flex_1().min_w(0).truncate().font_weight(700).text_size(12)
+          .text_color(idle ? C.muted : C.white).child(name.toUpperCase()))
+        .when(subs.length > 0, el => el.child(fold(a, subs)))
+        .child(this.hovered === a.address ? pin : since))
+      .child(h_flex().h(18).flex_none().gap(8).items_center().min_w(0)
+        .child(div().flex_1().min_w(0).truncate().text_size(10.5).text_color(C.muted)
+          .child((more || a.program?.name || a.address).toUpperCase()))
+        .when(Boolean(machine), el => el.child(div().text_size(9).text_color(C.dim).child(machine)))
+        .child(badge(a.status, { filled: a.status === "working", size: 9 })));
+    const gauge = h_flex().absolute().left(14).right(22).bottom(12).h(big ? 9 : 6).gap(3)
+      .children(Array.from({ length: 10 }, (_, i) => div().flex_1().h_full()
+        .when(i < cells, el => el.bg(tone))
+        .when(i >= cells, el => el.border(1).border_color(tone + "55"))));
+    const readout = h_flex().absolute().left(14).right(22).top(big ? 62 : 52).bottom(big ? 34 : 28)
+      .gap(8).items_end().min_w(0)
+      .when(w >= 230, el => el.child(v_flex().w(43).flex_none().pb(3).gap(2).text_size(9).line_height(1).font_weight(700).text_color(C.orange)
+        .child(div().child("SYNC"))
+        .child(div().child("RATE"))))
+      .when(a.status === "blocked" && w >= 260, el => el.child(div().font_family(MINCHO).font_weight(700)
+        .text_size(27).line_height(1).text_color(C.red).child("警告")))
+      .child(h_flex().flex_1().min_w(0).gap(3).items_end().justify_end()
+        .child(div().font_family(DIGITAL).text_size(a.status === "blocked" ? Math.min(32, digits) : digits)
+          .line_height(1).whitespace_nowrap().text_color(tone).child(value))
+        .child(div().pb(3).font_family(MONO).text_size(10).line_height(1).text_color(tone).child("%")));
     return div()
       .id(`ag-${a.address}`)
       .relative()
@@ -276,7 +282,9 @@ export default class Agents extends View {
       })
       .on_click(() => run("pane.focus", { pane: a.pane }))
       .children(frame)
-      .child(v_flex().absolute().inset_0().pl(12).pr(24).py(big ? 10 : 8).gap(big ? 6 : 5).child(top).child(readout).child(gauge));
+      .child(div().absolute().left(14).right(22).top(10).child(top))
+      .child(readout)
+      .child(gauge);
   }
 
   render(cx) {
@@ -387,11 +395,8 @@ export default class Agents extends View {
           cx.notify();
         })
         .child(svg(`mods/workspace-chrome/${isPinned ? "pin-off" : "pin"}.svg`).size(13));
-      // Under a space header the space goes without saying; an automatic tab number says nothing.
-      // Without a space header above (priority, pinned) the row names its space.
-      const full = byPriority || isPinned;
-      const name = full ? a.space_name || label(a) : more ?? (/^\d+$/.test(label(a)) ? a.program?.name || label(a) : label(a));
-      return this.card(t, a, { name, more: full ? more : null, pic, machine, subs, fold, pin, when, now, idle });
+      const name = a.space_name || label(a);
+      return this.card(t, a, { name, more: more ?? label(a), pic, machine, subs, fold, pin, when, now, idle });
     };
 
     // Groups in list order: spaces (grouped) or priority sections. Agents of a
@@ -440,7 +445,7 @@ export default class Agents extends View {
       .size_full()
       .min_h(0)
       .border_t(1)
-      .border_color("#ff6a0059")
+      .border_color("#f5b44b59")
       .text_size(13)
       .on_size_change((size, cx) => {
         if (Math.abs(size.width - this.width) < 1) return;
@@ -458,7 +463,7 @@ export default class Agents extends View {
             .flex_none()
             .items_end()
             .gap(8)
-            .child(div().font_family(MINCHO).font_weight(700).text_size(26).text_color(C.white).child("稼働体"))
+            .child(div().font_family(MINCHO).font_weight(700).text_size(32).text_color(C.red).child("稼働体"))
             .child(div().pb(4).text_size(10.5).font_weight(700).text_color(C.orange).child("AGENTS"))
             .child(div().flex_1())
             .child(div().absolute().left(14).right(14).bottom(4).h(10).child(line([[0, 9], [this.width - 46, 9], [this.width - 30, 0]], C.orange)))

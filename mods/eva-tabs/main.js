@@ -63,7 +63,7 @@ export default class Tabs extends View {
         .text_color(c.active ? "#ffffff" : t.muted)
         .child(c.active ? fill(shape, C.purple) : stroke(shape, C.purple))
         .when(c.active, el => el.child(div().absolute().top(0).left(0).w(TAB_W - CUT).h(3).bg(C.orange)))
-        .hover(s => s.bg(c.active ? "#00000000" : "#6b3fa033"))
+        .hover(s => s.bg(c.active ? "#00000000" : "#436c3533"))
         .on_mouse_down("left", (e, cx) => { cx.stop_propagation(); this.pressed = i; if (e.click_count === 2) run("tab.rename", { id: c.id }); })
         .on_mouse_up("left", () => {
           const from = this.pressed; this.pressed = null;
@@ -95,7 +95,7 @@ export default class Tabs extends View {
           else { run("layout.select", { stack: "panel-body", child: id }); run("layout.show", { id: "panel" }); }
         }).child(svg(icon).size(14)).child(label.toUpperCase());
     };
-    return h_flex().size_full().min_w(0).px(10).pl(lightsPadding).gap(3).items_center().border_b(1).border_color("#ff6a0080")
+    return h_flex().size_full().min_w(0).px(10).pl(lightsPadding).gap(3).items_center().border_b(1).border_color("#f5b44b80")
       .on_mouse_up("left", () => { this.pressed = null; })
       .on_scroll_wheel(e => { if (Math.abs(e.delta.y) >= 1) run(e.delta.y > 0 ? "tab.prev" : "tab.next"); })
       .child(h_flex().id("tab-scroll").flex_1().min_w(0).h_full().items_end().pb(0).gap(6).overflow_x_scrollbar().children(shown.map(item)))
