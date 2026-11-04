@@ -2,6 +2,7 @@ import { div, Background } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
 import { agents, spaces, shared, setShared } from "herdr";
 import { C, MINCHO, MONO, line, motion, fill, cut } from "./eva.js";
+import { machine, formatBytes, countdown } from "./machine.js";
 
 // Click the field to hold it still; MOTION off stills it too. Kept across restarts.
 const flowing = () => shared("eva.signal") !== false;
@@ -41,6 +42,52 @@ function signal(width, height) {
     }
   }
   return div().relative().w_full().h(height).overflow_hidden().children(paths);
+}
+
+// Host readouts. Green while healthy, red past a threshold; "--" until the first poll lands.
+function gauge(percent, tone) {
+  const lit = percent == null ? 0 : Math.round(percent / 10);
+  return h_flex().gap(2).flex_none().children(Array.from({ length: 10 }, (_, i) =>
+    div().w(6).h(9).when(i < lit, el => el.bg(tone)).when(i >= lit, el => el.border(1).border_color(C.dim))));
+}
+
+const digits = (text, tone) => div().font_family("Digital-7 Mono").text_size(17).line_height(1).text_color(tone).child(text);
+const unit = (text, tone = C.muted) => div().font_family(MONO).text_size(9).text_color(tone).child(text);
+const pct = (value) => (value == null ? "--" : String(Math.round(value)).padStart(2, "0"));
+
+function host(m) {
+  const row = (kanji, code, ...body) => h_flex().h(18).gap(8).items_center()
+    .child(div().w(28).flex_none().font_family(MINCHO).font_weight(700).text_size(12).text_color(C.white).child(kanji))
+    .child(div().w(30).flex_none().font_family(MONO).text_size(8).text_color(C.muted).child(code))
+    .child(h_flex().flex_1().gap(6).items_center().children(body));
+  const meter = (kanji, code, value, alarm) => {
+    const tone = value == null ? C.dim : alarm ? C.red : C.green;
+    return row(kanji, code, gauge(value, tone), digits(pct(value), tone), unit("%"));
+  };
+  const rate = (value) => {
+    const text = value == null ? "--K" : formatBytes(value);
+    return [digits(text.slice(0, -1), value == null ? C.dim : C.green), unit(text.slice(-1))];
+  };
+  const battery = m?.battery;
+  const power = !battery || battery.external
+    ? battery?.percent == null
+      ? row("電源", "AC", unit("外部電源 / EXTERNAL", C.green))
+      : meter("電源", "AC", battery.percent, false)
+    : (() => {
+      const tone = battery.percent < 20 ? C.red : C.green;
+      const left = m.deadline == null
+        ? div().font_family(MINCHO).text_size(10).text_color(C.muted).child("計測中")
+        : digits(countdown(m.deadline, Date.now()), tone);
+      return row("電源", "BATT", div().font_family(MINCHO).text_size(10).text_color(tone).child("活動限界"), left, unit(`${battery.percent}%`, tone));
+    })();
+  const thermal = m?.thermal;
+  return v_flex().w(244).h_full().flex_none().justify_center().gap(3).px(14).bg("#0f0a18").border_l(1).border_color(C.dim)
+    .child(div().font_family(MONO).text_size(9).text_color(C.orange).child("機体状態 / HOST"))
+    .child(meter("演算", "CPU", m?.cpu, m?.cpu >= 90))
+    .child(meter("記憶", "MEM", m?.memory?.used, m?.memory && m.memory.pressure !== "normal"))
+    .child(row("通信", "NET", unit("↓"), ...rate(m?.rate?.rx), unit("↑"), ...rate(m?.rate?.tx)))
+    .child(row("冷却", "THERM", unit(!thermal ? "--" : thermal.throttled ? `THROTTLED ${thermal.limit}%` : "NOMINAL", !thermal ? C.dim : thermal.throttled ? C.red : C.green)))
+    .child(power);
 }
 
 function triad(working, blocked, standby, compact) {
@@ -102,6 +149,7 @@ export function commandDeck(view) {
         .child(h_flex().h(10).flex_none().justify_between().text_size(8).font_family(MONO).text_color(C.dim)
           .children(["−4", "−2", "0", "+2", "+4"].map(label => div().child(label))))))
       .when(view.deckWidth < 560, el => el.child(div().flex_1()))
+      .when(view.deckWidth >= 1400, el => el.child(host(machine())))
       .child(v_flex().flex_none().px(24).gap(4)
         .child(div().font_family(MONO).text_size(9).text_color(C.orange).child(`DISTRIBUTED CONTROL · ${String(list.length).padStart(2, "0")} AGENTS`))
         .child(triad(working, blocked, standby, view.deckWidth < 800))))

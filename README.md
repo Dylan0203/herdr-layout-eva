@@ -1,8 +1,10 @@
 # herdr-layout-eva
 
-A late-90s command-center HUD layout for [herdr-app](https://herdr.dev). It has purple cut-corner plates, orange for whatever is selected, heavy Mincho kanji titles and large seven-segment readouts. A command deck above the terminals holds live agent counts and an orange/purple signal field; click the field to hold it still. Its top strip is a warning light: a thin red rule normally, solid red when an agent needs you. Red is kept for warnings only. Terminals are about 80% opaque, so the topo map shows faintly behind them. Agents show up as HUD cards with a **SYNC RATE**, the percent of their context window still free. A new agent opens with a full-window 作戦開始 card. A blocked agent turns into a blinking hazard frame.
+A late-90s command-center HUD layout for [herdr-app](https://herdr.dev). It has purple cut-corner plates, orange for whatever is selected, heavy Mincho kanji titles and large seven-segment readouts. A command deck above the terminals holds live agent counts and an orange/purple signal field; click the field to hold it still. Beside it, 機体状態 HOST reads out the Mac itself: CPU, memory, network, thermal state and power. Its top strip is a warning light: a thin red rule normally, solid red when an agent needs you. Red is kept for warnings only. Terminals are about 80% opaque, so the topo map shows faintly behind them. Agents show up as HUD cards with a **SYNC RATE**, the percent of their context window still free. A new agent opens with a full-window 作戦開始 card. A blocked agent turns into a blinking hazard frame.
 
 ![EVA HUD](preview.png)
+
+![機体状態 HOST panel and agent counts](host.gif)
 
 All art is original vector work. It recreates a mood (colors, type, shapes), not any show's logos, characters or screenshots.
 
@@ -11,7 +13,7 @@ All art is original vector work. It recreates a mood (colors, type, shapes), not
 - `layouts/eva.json`: the layout, with `layouts/eva.png` as its preview in Settings → Look.
 - `themes/eva.json`: the theme. Near-black terminals with purple, orange and green ANSI colors. Herdr's own palette, picker and menus pick it up too.
 - `mods/`: the nine mods the layout draws with. Eight are cloned from Herdr 0.1.12's shipped mods, with behavior unchanged and only the look replaced; `eva-launch` is new.
-  - `eva-chrome`: the command deck with its agent counts and native animated signal field (`command.js`), sidebar brand row and local clock. It also holds `wallpaper.png`.
+  - `eva-chrome`: the command deck with its agent counts, native animated signal field (`command.js`) and 機体状態 HOST panel (`machine.js`), sidebar brand row and local clock. It also holds `wallpaper.png`.
   - `eva-spaces`: 作業区画 SPACES, with branch, ahead/behind and a status label.
   - `eva-agents`: 稼働体 AGENTS cards, with the SYNC RATE gauge (`sync.js`). The readout uses the Digital-7 Mono font in `fonts/`, by Sizenko Alexander of [Style-7](http://www.styleseven.com), freeware for non-commercial use.
   - `eva-tabs`: the tab bar.
@@ -48,10 +50,13 @@ For SYNC RATE, `eva-agents` does the following every 15 seconds for each local a
 - **OpenCode:** it reads `~/.local/share/opencode/opencode.db` and `~/.cache/opencode/models.json`.
 - It reads only token counts and session ids.
 
+For 機体状態 HOST, the command deck runs `pmset`, `memory_pressure`, `sysctl`, `ps`, `route` and `netstat` every 5 seconds, in one shell call. It reads only totals: CPU percent, memory pressure, interface byte counters, thermal throttling and battery state.
+
 Nothing reaches the network.
 
 ## Known limits
 
+- 機体状態 HOST is macOS only and shows when the command deck is at least 1400 px wide. It shows thermal throttling, not °C: Apple Silicon has no temperature reading without `sudo`. On battery, the power row becomes a 活動限界 countdown from macOS's estimate, red under 20%. It reads 計測中 until macOS has an estimate, which can take a minute or two after unplugging.
 - SYNC RATE for Claude Code measures against 1M tokens. For a smaller budget, set `autoCompactWindow` in `~/.claude/settings.json` (or per model under `modelSettings`); note that Claude Code then also auto-compacts at that size.
 - SYNC RATE covers local Claude Code, Codex and OpenCode agents. Others, and agents on other machines, show `---.-`.
 - A fresh OpenCode shows `---.-` until its first reply.
