@@ -5,7 +5,7 @@ import { View, div, image, svg } from "gpui-kit";
 import { v_flex, h_flex } from "gpui-base";
 import { agents, terminals, panes, focused, spaces, run, theme, shared, setShared, setAgentOrder, openOverlay, closeOverlay, props, window, layout } from "herdr";
 import { C, MINCHO, MONO, TONE, LABEL, cut, fill, stroke, line, hazard, blink, motion } from "./eva.js";
-import { startSync, syncRate } from "./sync.js";
+import { startSync, syncRate, transcriptStats, formatSize } from "./sync.js";
 
 const DIGITAL = "Digital-7 Mono";
 const STATES = ["working", "done", "idle", "blocked"];
@@ -319,11 +319,19 @@ export default class Agents extends View {
     const label = !blocked && fit(true) >= cap;
     const above = !blocked && !label && big;
     const size = Math.min(cap, fit(label), above ? rh - 15 : Infinity);
+    // Claude Code only: compactions so far and the transcript's size, on every card
+    // (idle ones are the ones people look at). Muted, no gauge: when auto-compact fires isn't known.
+    const counts = transcriptStats(a.address);
+    const record = (kanji, text) => h_flex().gap(4).items_end().line_height(1)
+      .child(div().font_family(MINCHO).font_weight(700).text_size(9).text_color(C.muted).child(kanji))
+      .child(div().font_family(MONO).text_size(9).text_color(C.muted).child(text));
+    const records = counts && [record("圧縮", String(counts.compacts).padStart(2, "0")), record("記録", formatSize(counts.bytes))];
     return card
       .child(v_flex().absolute().left(14).right(22).top(10).bottom(12).gap(3)
         .child(title.child(corner))
         .child(h_flex().h(20).flex_none().gap(8).items_center().min_w(0)
           .child(detail).when(Boolean(machine), el => el.child(host))
+          .when(Boolean(records), el => el.child(h_flex().flex_none().gap(7).children(records ?? [])))
           .child(this.tabs(status, col >= 280)))
         .child(div().flex_1())
         .when(above, el => el.child(h_flex().h(12).flex_none().gap(6).items_end()

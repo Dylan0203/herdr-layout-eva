@@ -3,8 +3,8 @@
 // other agent (or one it can't read) has no rate (null).
 // Adapted from FunnyQ/herdr-layout-p5's sp-context.js.
 //
-// Reads: ~/.claude/sessions/<pid>.json, the session's jsonl (last lines
-// only), ~/.claude/settings.json; for Codex, ~/.codex/state_*.sqlite and its
+// Reads: ~/.claude/sessions/<pid>.json, the session's jsonl (its last few MB,
+// plus a compaction count over bytes appended since the last poll), ~/.claude/settings.json; for Codex, ~/.codex/state_*.sqlite and its
 // rollout file; for OpenCode, ~/.local/share/opencode/opencode.db (read-only)
 // and ~/.cache/opencode/models.json. Runs pgrep, ps, lsof, sqlite3, grep, jq.
 // Nothing leaves the machine.
@@ -14,6 +14,7 @@ import { terminals, exec, home, readTextFile } from "herdr";
 const POLL = 15000;
 const CLAUDE_WINDOW = 1000000;
 const rates = new Map();
+const stats = new Map();
 
 const rows = (text) =>
   text.split("\n").flatMap((line) => {
@@ -43,11 +44,14 @@ export function claudeRate(text, settings) {
     usage.input_tokens +
     (usage.cache_read_input_tokens ?? 0) +
     (usage.cache_creation_input_tokens ?? 0);
+  // autoCompactWindow can be "auto" or null: only a positive number overrides.
   const window =
-    settings?.modelSettings?.[model]?.autoCompactWindow ??
-    settings?.autoCompactWindow ??
-    CLAUDE_WINDOW;
-  return left(used, window);
+    [
+      settings?.modelSettings?.[model]?.autoCompactWindow,
+      settings?.autoCompactWindow,
+    ].find((w) => typeof w === "number" && w > 0) ?? CLAUDE_WINDOW;
+  const rate = left(used, window);
+  return Number.isFinite(rate) ? rate : null;
 }
 
 export function codexRate(text) {
@@ -67,6 +71,20 @@ export function opencodeRate(tokens, window) {
   return left(used, window);
 }
 
+// Each compaction writes one system line; tool output that merely mentions the
+// subtype is escaped inside a string, and a line cut by a scan window doesn't parse.
+export const countCompacts = (text) =>
+  rows(text).filter(
+    (r) => r.type === "system" && r.subtype === "compact_boundary",
+  ).length;
+
+export function formatSize(bytes) {
+  const k = bytes / 1024;
+  if (k < 1000) return `${Math.round(k)}K`;
+  if (k < 1024 * 1000) return `${Math.round(k / 1024)}M`;
+  return `${(k / 1024 / 1024).toFixed(1)}G`;
+}
+
 // macOS `ps -o etime`: [[dd-]hh:]mm:ss.
 export function elapsedMs(etime) {
   const [days, clock] = etime.trim().includes("-")
@@ -79,9 +97,49 @@ export function elapsedMs(etime) {
 }
 
 const sh = async (command, args) => (await exec(command, args)).stdout.trim();
-// Transcripts outgrow readTextFile's 1 MiB limit: read only the last matching lines.
-const lastMatching = (file, needle) =>
-  sh("sh", ["-c", 'grep -F -- "$1" "$2" | tail -n 20', "sh", needle, file]);
+// Transcripts reach gigabytes: grep only their last few MB, wider only when that
+// window holds nothing usable (a huge tool result or image after the last turn).
+const WINDOWS = [4e6, 64e6, 0];
+async function lastMatching(file, needle, parse) {
+  for (const bytes of WINDOWS) {
+    const source = bytes ? `tail -c ${bytes} "$2"` : 'cat "$2"';
+    const value = parse(
+      await sh("sh", [
+        "-c",
+        `${source} | grep -F -- "$1" | tail -n 20`,
+        "sh",
+        needle,
+        file,
+      ]),
+    );
+    if (value != null) return value;
+  }
+  return null;
+}
+
+// Compactions and transcript size, scanning only the bytes appended since the last
+// poll. The file only grows; a smaller size means a new file, so scan it whole.
+const COMPACT = '"subtype":"compact_boundary"';
+const scans = new Map();
+async function transcript(file) {
+  const size = Number(await sh("stat", ["-f", "%z", file]));
+  if (!size) return null;
+  const seen = scans.get(file);
+  const from = seen && size >= seen.size ? seen.size : 0;
+  const text = await sh("sh", [
+    "-c",
+    'tail -c +"$1" "$2" | head -c "$3" | grep -F -- "$4" || true',
+    "sh",
+    String(from + 1),
+    file,
+    String(size - from),
+    COMPACT,
+  ]);
+  const compacts = (from ? seen.compacts : 0) + countCompacts(text);
+  scans.set(file, { size, compacts });
+  return { compacts, bytes: size };
+}
+
 // Herdr starts agents inside an interactive shell (sometimes a login shell
 // around it), so the agent can be a few levels below the terminal's pid.
 const children = async (pid) =>
@@ -95,7 +153,7 @@ async function descendants(pid, depth = 4) {
   ];
 }
 
-async function claude(pid) {
+async function claude(pid, address) {
   const session = JSON.parse(
     (await readTextFile(`${home()}/.claude/sessions/${pid}.json`)) ?? "null",
   );
@@ -105,7 +163,9 @@ async function claude(pid) {
   const settings = JSON.parse(
     (await readTextFile(`${home()}/.claude/settings.json`)) ?? "{}",
   );
-  return claudeRate(await lastMatching(file, '"usage"'), settings);
+  const counts = await transcript(file).catch(() => null);
+  counts ? stats.set(address, counts) : stats.delete(address);
+  return lastMatching(file, '"usage"', (text) => claudeRate(text, settings));
 }
 
 // Codex sessions are written by a shared app-server, not the codex process: find the
@@ -131,7 +191,7 @@ async function codex(pid) {
     `select rollout_path from threads where ${where} order by updated_at_ms desc limit 1`,
   ]);
   if (!file) return null;
-  return codexRate(await lastMatching(file, '"token_count"'));
+  return lastMatching(file, '"token_count"', codexRate);
 }
 
 // OpenCode keeps everything in one sqlite file. The agent's session is the newest
@@ -212,6 +272,9 @@ const READERS = { claude, codex, opencode };
 /** The agent's sync rate (0–100), or null when unknown. */
 export const syncRate = (address) => rates.get(address) ?? null;
 
+/** A Claude Code agent's compaction count and transcript bytes, or null. */
+export const transcriptStats = (address) => stats.get(address) ?? null;
+
 async function poll() {
   const live = terminals().filter(
     (t) => READERS[t.program?.key] && !t.address.includes("/"),
@@ -220,7 +283,7 @@ async function poll() {
     try {
       let value = null;
       for (const pid of await descendants(t.pid)) {
-        value = await READERS[t.program.key](pid).catch(() => null);
+        value = await READERS[t.program.key](pid, t.address).catch(() => null);
         if (value != null) break;
       }
       value == null ? rates.delete(t.address) : rates.set(t.address, value);
@@ -229,8 +292,9 @@ async function poll() {
     }
   }
   const alive = new Set(live.map((t) => t.address));
-  for (const address of rates.keys())
-    if (!alive.has(address)) rates.delete(address);
+  for (const map of [rates, stats])
+    for (const address of map.keys())
+      if (!alive.has(address)) map.delete(address);
 }
 
 export function startSync(cx) {

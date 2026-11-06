@@ -1,5 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { claudeRate, codexRate, opencodeRate, elapsedMs } from "../mods/eva-agents/sync.js";
+import {
+  claudeRate,
+  codexRate,
+  opencodeRate,
+  elapsedMs,
+  countCompacts,
+  formatSize,
+} from "../mods/eva-agents/sync.js";
 
 const line = (o) => JSON.stringify(o);
 const assistant = (usage, extra = {}) => line({ type: "assistant", message: { model: "claude-opus-5-5", usage }, ...extra });
@@ -26,6 +33,26 @@ describe("claudeRate", () => {
     const text = assistant({ input_tokens: 100000 });
     expect(claudeRate(text, { autoCompactWindow: 200000 })).toBeCloseTo(50);
     expect(claudeRate(text, { modelSettings: { "claude-opus-5-5": { autoCompactWindow: 400000 } } })).toBeCloseTo(75);
+  });
+
+  it('autoCompactWindow 不是正數（例如 "auto"）時往下退回預設 window', () => {
+    const text = assistant({ input_tokens: 250000 });
+    expect(
+      claudeRate(text, {
+        modelSettings: { "claude-opus-5-5": { autoCompactWindow: "auto" } },
+      }),
+    ).toBeCloseTo(75);
+    expect(
+      claudeRate(text, {
+        modelSettings: { "claude-opus-5-5": { autoCompactWindow: "auto" } },
+        autoCompactWindow: 500000,
+      }),
+    ).toBeCloseTo(50);
+    expect(claudeRate(text, { autoCompactWindow: null })).toBeCloseTo(75);
+  });
+
+  it("usage 缺欄位時回傳 null，不是 NaN", () => {
+    expect(claudeRate(assistant({ output_tokens: 10 }), {})).toBeNull();
   });
 
   it("沒有可用資料或壞掉的行時回傳 null", () => {
@@ -63,5 +90,41 @@ describe("elapsedMs", () => {
     expect(elapsedMs("01:02:03")).toBe(3723000);
     expect(elapsedMs("2-01:00:00")).toBe((2 * 86400 + 3600) * 1000);
     expect(elapsedMs("  05:00\n")).toBe(300000);
+  });
+});
+
+describe("countCompacts", () => {
+  it("只算真正的 compact_boundary 系統訊息", () => {
+    const text = [
+      line({
+        type: "system",
+        subtype: "compact_boundary",
+        compactMetadata: { trigger: "auto", preTokens: 414391 },
+      }),
+      line({
+        type: "user",
+        message: { content: 'grep "subtype":"compact_boundary"' },
+      }),
+      line({
+        type: "system",
+        subtype: "compact_boundary",
+        compactMetadata: { trigger: "manual" },
+      }),
+      '{"type":"system","subtype":"compact_bou', // a line cut by the scan window
+    ].join("\n");
+    expect(countCompacts(text)).toBe(2);
+  });
+
+  it("沒有就是 0", () => {
+    expect(countCompacts("")).toBe(0);
+  });
+});
+
+describe("formatSize", () => {
+  it("用 K / M / G 縮寫檔案大小", () => {
+    expect(formatSize(980 * 1024)).toBe("980K");
+    expect(formatSize(46979688)).toBe("45M");
+    expect(formatSize(489 * 1024 ** 2)).toBe("489M");
+    expect(formatSize(4.7 * 1024 ** 3)).toBe("4.7G");
   });
 });
