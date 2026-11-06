@@ -4,6 +4,9 @@ import { agents, spaces, shared, setShared } from "herdr";
 import { C, MINCHO, MONO, line, motion, fill, cut } from "./eva.js";
 import { machine, formatBytes, countdown } from "./machine.js";
 
+// Hundredths for the 活動限界 clock: one lap a second, run natively by frames().
+const CENTI = Array.from({ length: 50 }, (_, i) => `:${String(98 - i * 2).padStart(2, "0")}`);
+
 // Click the field to hold it still; MOTION off stills it too. Kept across restarts.
 const flowing = () => shared("eva.signal") !== false;
 const toggleSignal = () => setShared("eva.signal", !flowing());
@@ -74,14 +77,23 @@ function host(m) {
       ? row("電源", "AC", unit("外部電源 / EXTERNAL", C.green))
       : meter("電源", "AC", battery.percent, false)
     : (() => {
+      // On internal power the row grows into the 活動限界 clock: seconds from render, hundredths native.
       const tone = battery.percent < 20 ? C.red : C.green;
-      const left = m.deadline == null
-        ? div().font_family(MINCHO).text_size(10).text_color(C.muted).child("計測中")
-        : digits(countdown(m.deadline, Date.now()), tone);
-      return row("電源", "BATT", div().font_family(MINCHO).text_size(10).text_color(tone).child("活動限界"), left, unit(`${battery.percent}%`, tone));
+      const clock = m.deadline == null
+        ? div().font_family(MINCHO).text_size(12).text_color(C.muted).child("計測中")
+        : h_flex().items_end().gap(1)
+          .child(div().font_family("Digital-7 Mono").text_size(23).line_height(1).text_color(tone).child(countdown(m.deadline, Date.now())))
+          .child(div().id("countdown-centi").font_family("Digital-7 Mono").text_size(13).line_height(1).text_color(tone).frames(CENTI, 20));
+      return h_flex().h(33).gap(8).items_center()
+        .child(div().w(28).flex_none().font_family(MINCHO).font_weight(700).text_size(12).text_color(C.white).child("電源"))
+        .child(v_flex().flex_1().gap(0)
+          .child(h_flex().gap(6).items_center()
+            .child(div().font_family(MINCHO).font_weight(700).text_size(10).text_color(tone).child("活動限界"))
+            .child(unit(`内部電源 BATT ${battery.percent}%`, tone)))
+          .child(clock));
     })();
   const thermal = m?.thermal;
-  return v_flex().w(244).h_full().flex_none().justify_center().gap(3).px(14).bg("#0f0a18").border_l(1).border_color(C.dim)
+  return v_flex().w(244).h_full().flex_none().justify_center().gap(2).px(14).bg("#0f0a18").border_l(1).border_color(C.dim)
     .child(div().font_family(MONO).text_size(9).text_color(C.orange).child("機体状態 / HOST"))
     .child(meter("演算", "CPU", m?.cpu, m?.cpu >= 90))
     .child(meter("記憶", "MEM", m?.memory?.used, m?.memory && m.memory.pressure !== "normal"))
