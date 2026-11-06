@@ -1,6 +1,6 @@
 # herdr-layout-eva
 
-A late-90s command-center HUD layout for [herdr-app](https://herdr.dev). It has purple cut-corner plates, orange for whatever is selected, heavy Mincho kanji titles and large seven-segment readouts. A command deck above the terminals holds live agent counts and an orange/purple signal field; click the field to hold it still. Beside it, 機体状態 HOST reads out the Mac itself: CPU, memory, network, thermal state and power. Its top strip is a warning light: a thin red rule normally, solid red when an agent needs you. Red is kept for warnings only. Terminals are about 80% opaque, so the topo map shows faintly behind them. Agents show up as HUD cards with a **SYNC RATE**, the percent of their context window still free. A new agent opens with a full-window 作戦開始 card. A blocked agent turns into a blinking hazard frame.
+A late-90s command-center HUD layout for [herdr-app](https://herdr.dev). It has purple cut-corner plates, orange for whatever is selected, heavy Mincho kanji titles and large seven-segment readouts. A command deck above the terminals holds live agent counts and an orange/purple signal field; click the field to hold it still. Beside it, 機体状態 HOST reads out the Mac itself: CPU, memory, network, thermal state and power. Its top strip is a warning light: a thin red rule normally, solid red when an agent needs you. Red is kept for warnings only. Terminals are about 80% opaque, so the topo map shows faintly behind them. Agents show up as HUD cards with a **SYNC RATE**, the percent of their context window still free. Claude Code cards also show 圧縮, how many times the session has compacted, and 記録, its transcript size. A new agent opens with a full-window 作戦開始 card. A blocked agent turns into a blinking hazard frame.
 
 ![EVA HUD](preview.png)
 
@@ -45,10 +45,10 @@ It copies the layout, theme and mods into `~/.config/herdr-app/` and switches to
 For SYNC RATE, `eva-agents` does the following every 15 seconds for each local agent:
 
 - It runs `pgrep`, `ps`, `lsof`, `grep`, `tail`, `sqlite3` (read-only) and `jq` to find the agent's session.
-- **Claude Code:** it reads `~/.claude/sessions/<pid>.json`, the last lines of that session's transcript under `~/.claude/projects/`, and `~/.claude/settings.json`.
+- **Claude Code:** it reads `~/.claude/sessions/<pid>.json`, the last few MB of that session's transcript under `~/.claude/projects/`, and `~/.claude/settings.json`. For 圧縮 and 記録 it takes the transcript's size and scans the bytes appended since the last poll for compaction markers. The first poll after Herdr starts scans each transcript once in full.
 - **Codex:** it reads `~/.codex/state_*.sqlite` and the session's rollout file.
 - **OpenCode:** it reads `~/.local/share/opencode/opencode.db` and `~/.cache/opencode/models.json`.
-- It reads only token counts and session ids.
+- It reads only token counts, session ids, compaction markers and file sizes.
 
 For 機体状態 HOST, the command deck runs `pmset`, `memory_pressure`, `sysctl`, `ps`, `route` and `netstat` every 5 seconds, in one shell call. It reads only totals: CPU percent, memory pressure, interface byte counters, thermal throttling and battery state.
 
@@ -57,7 +57,7 @@ Nothing reaches the network.
 ## Known limits
 
 - 機体状態 HOST is macOS only and shows when the command deck is at least 1400 px wide. It shows thermal throttling, not °C: Apple Silicon has no temperature reading without `sudo`. On battery, the power row becomes a 活動限界 countdown from macOS's estimate, red under 20%. It reads 計測中 until macOS has an estimate, which can take a minute or two after unplugging.
-- SYNC RATE for Claude Code measures against 1M tokens. For a smaller budget, set `autoCompactWindow` in `~/.claude/settings.json` (or per model under `modelSettings`); note that Claude Code then also auto-compacts at that size.
+- SYNC RATE for Claude Code measures against 1M tokens. For a smaller budget, set `autoCompactWindow` in `~/.claude/settings.json` (or per model under `modelSettings`); note that Claude Code then also auto-compacts at that size. A non-number such as `"auto"` counts as unset.
 - SYNC RATE covers local Claude Code, Codex and OpenCode agents. Others, and agents on other machines, show `---.-`.
 - A fresh OpenCode shows `---.-` until its first reply.
 - Two OpenCode agents, or two fresh Codex agents, in the same folder show the same rate.
