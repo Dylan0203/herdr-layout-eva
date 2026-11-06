@@ -159,18 +159,26 @@ describe("battery deadline", () => {
     expect(snapshot(out("3:12 remaining"), null, 1000).deadline).toBe(1000 + 192 * 60000);
   });
 
-  it("估計值差不到 2 分鐘時沿用原本的截止時間", () => {
+  it("10 分鐘內沿用原本的截止時間，不理會估計值的跳動", () => {
     const first = snapshot(out("3:12 remaining"), null, 0);
-    expect(snapshot(out("3:11 remaining"), first, 30000).deadline).toBe(first.deadline);
+    expect(snapshot(out("2:00 remaining"), first, 9 * 60000).deadline).toBe(first.deadline);
   });
 
-  it("差超過 2 分鐘時重設", () => {
+  it("滿 10 分鐘用新的估計值重新對時", () => {
     const first = snapshot(out("3:12 remaining"), null, 0);
-    expect(snapshot(out("2:00 remaining"), first, 5000).deadline).toBe(5000 + 120 * 60000);
+    expect(snapshot(out("2:00 remaining"), first, 10 * 60000).deadline).toBe(10 * 60000 + 120 * 60000);
+  });
+
+  it("估計值暫時消失時沿用原本的截止時間", () => {
+    const first = snapshot(out("3:12 remaining"), null, 0);
+    expect(snapshot(out("(no estimate)"), first, 5000).deadline).toBe(first.deadline);
   });
 
   it("沒有估計值或插電時沒有截止時間", () => {
     expect(snapshot(out("(no estimate)"), null, 0).deadline).toBeNull();
+    const first = snapshot(out("3:12 remaining"), null, 0);
+    const ac = ["Now drawing from 'AC Power'\n -InternalBattery-0 (id=1)\t64%; AC attached; not charging present: true", "", "", "", "", "", ""].join(`\n${SEP}\n`);
+    expect(snapshot(ac, first, 5000).deadline).toBeNull();
   });
 });
 

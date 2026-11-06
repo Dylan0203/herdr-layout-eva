@@ -84,13 +84,15 @@ export function formatBytes(bytes) {
   return `${(k / 1024 / 1024).toFixed(1)}G`;
 }
 
-// macOS estimates whole minutes and revises them often. Count down locally from the
-// estimate, and move the deadline only when the estimate drifts past DRIFT.
-const DRIFT = 2 * 60000;
-function deadline(battery, previous, now) {
-  if (!battery || battery.external || battery.remaining == null) return null;
-  const estimate = now + battery.remaining * 60000;
-  return previous != null && Math.abs(previous - estimate) <= DRIFT ? previous : estimate;
+// macOS estimates whole minutes and revises them often. Count down locally from a
+// deadline and take macOS's estimate again only every RESYNC; a lost estimate keeps it.
+const RESYNC = 10 * 60000;
+function deadline(battery, prev, now) {
+  if (!battery || battery.external) return { deadline: null, anchoredAt: null };
+  const fresh = prev?.deadline != null && now - prev.anchoredAt < RESYNC;
+  if (fresh || (battery.remaining == null && prev?.deadline != null)) return { deadline: prev.deadline, anchoredAt: prev.anchoredAt };
+  if (battery.remaining == null) return { deadline: null, anchoredAt: null };
+  return { deadline: now + battery.remaining * 60000, anchoredAt: now };
 }
 
 export function countdown(deadline, now) {
@@ -116,7 +118,7 @@ export function snapshot(stdout, prev, now) {
   const battery = parseBattery(batt);
   return {
     battery,
-    deadline: deadline(battery, prev?.deadline, now),
+    ...deadline(battery, prev, now),
     memory: parseMemory(pressure, level),
     cpu: parseCpu(cores, ps),
     net,
