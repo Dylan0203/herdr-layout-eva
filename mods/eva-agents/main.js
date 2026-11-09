@@ -325,7 +325,7 @@ export default class Agents extends View {
     const record = (kanji, text) => h_flex().gap(4).items_end().line_height(1)
       .child(div().font_family(MINCHO).font_weight(700).text_size(9).text_color(C.muted).child(kanji))
       .child(div().font_family(MONO).text_size(9).text_color(C.muted).child(text));
-    const records = counts && [record("圧縮", String(counts.compacts).padStart(2, "0")), record("記録", formatSize(counts.bytes))];
+    const records = counts && [record("圧縮", counts.compacts == null ? "--" : String(counts.compacts).padStart(2, "0")), record("記録", formatSize(counts.bytes))];
     return card
       .child(v_flex().absolute().left(14).right(22).top(10).bottom(12).gap(3)
         .child(title.child(corner))
