@@ -96,17 +96,20 @@ export function elapsedMs(etime) {
   return (((Number(days) * 24 + h) * 60 + m) * 60 + sec) * 1000;
 }
 
-const sh = async (command, args) => (await exec(command, args)).stdout.trim();
+const sh = async (command, args, options) =>
+  (await exec(command, args, options)).stdout.trim();
 // Transcripts reach gigabytes: grep only their last few MB, wider only when that
 // window holds nothing usable (a huge tool result or image after the last turn).
 const WINDOWS = [4e6, 64e6, 0];
 async function lastMatching(file, needle, parse) {
   for (const bytes of WINDOWS) {
-    const source = bytes ? `tail -c ${bytes} "$2"` : 'cat "$2"';
+    const source = bytes
+      ? `tail -c ${bytes} "$2" | grep -F -- "$1"`
+      : 'grep -F -- "$1" "$2"';
     const value = parse(
       await sh("sh", [
         "-c",
-        `${source} | grep -F -- "$1" | tail -n 20`,
+        `${source} | tail -n 20`,
         "sh",
         needle,
         file,
@@ -119,25 +122,41 @@ async function lastMatching(file, needle, parse) {
 
 // Compactions and transcript size, scanning only the bytes appended since the last
 // poll. The file only grows; a smaller size means a new file, so scan it whole.
+// The whole-file scan is a plain grep (BSD `head -c` is ~5x slower) with exec's
+// longest timeout: a 4.6 GB transcript takes about 40 s. If even that fails, the
+// file shows no count rather than rescanning every poll.
 const COMPACT = '"subtype":"compact_boundary"';
+const FIRST_SCAN = 600000;
 const scans = new Map();
-async function transcript(file) {
+export async function transcript(file) {
   const size = Number(await sh("stat", ["-f", "%z", file]));
   if (!size) return null;
   const seen = scans.get(file);
-  const from = seen && size >= seen.size ? seen.size : 0;
-  const text = await sh("sh", [
-    "-c",
-    'tail -c +"$1" "$2" | head -c "$3" | grep -F -- "$4" || true',
-    "sh",
-    String(from + 1),
-    file,
-    String(size - from),
-    COMPACT,
-  ]);
-  const compacts = (from ? seen.compacts : 0) + countCompacts(text);
-  scans.set(file, { size, compacts });
-  return { compacts, bytes: size };
+  if (seen?.compacts === null) return { compacts: null, bytes: size };
+  if (seen?.size === size) return { compacts: seen.compacts, bytes: size };
+  const from = seen && size > seen.size ? seen.size : 0;
+  try {
+    const text = from
+      ? await sh("sh", [
+          "-c",
+          'tail -c +"$1" "$2" | head -c "$3" | grep -F -- "$4" || true',
+          "sh",
+          String(from + 1),
+          file,
+          String(size - from),
+          COMPACT,
+        ])
+      : await sh("sh", ["-c", 'grep -F -- "$1" "$2" || true', "sh", COMPACT, file], {
+          timeout: FIRST_SCAN,
+        });
+    const compacts = (from ? seen.compacts : 0) + countCompacts(text);
+    scans.set(file, { size, compacts });
+    return { compacts, bytes: size };
+  } catch {
+    if (from) return { compacts: seen.compacts, bytes: size };
+    scans.set(file, { size, compacts: null });
+    return { compacts: null, bytes: size };
+  }
 }
 
 // Herdr starts agents inside an interactive shell (sometimes a login shell

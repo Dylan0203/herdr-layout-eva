@@ -45,7 +45,7 @@ It copies the layout, theme and mods into `~/.config/herdr-app/` and switches to
 For SYNC RATE, `eva-agents` does the following every 15 seconds for each local agent:
 
 - It runs `pgrep`, `ps`, `lsof`, `grep`, `tail`, `sqlite3` (read-only) and `jq` to find the agent's session.
-- **Claude Code:** it reads `~/.claude/sessions/<pid>.json`, the last few MB of that session's transcript under `~/.claude/projects/`, and `~/.claude/settings.json`. For 圧縮 and 記録 it takes the transcript's size and scans the bytes appended since the last poll for compaction markers. The first poll after Herdr starts scans each transcript once in full.
+- **Claude Code:** it reads `~/.claude/sessions/<pid>.json`, the last few MB of that session's transcript under `~/.claude/projects/`, and `~/.claude/settings.json`. For 圧縮 and 記録 it takes the transcript's size and scans the bytes appended since the last poll for compaction markers. The first poll after Herdr starts greps each transcript once in full, which takes about 40 seconds for a 4.6 GB one. If that scan fails, the card shows `圧縮 --` instead of retrying every poll.
 - **Codex:** it reads `~/.codex/state_*.sqlite` and the session's rollout file.
 - **OpenCode:** it reads `~/.local/share/opencode/opencode.db` and `~/.cache/opencode/models.json`.
 - It reads only token counts, session ids, compaction markers and file sizes.
