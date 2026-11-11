@@ -1,6 +1,6 @@
 # herdr-layout-eva
 
-A late-90s command-center HUD layout for [herdr-app](https://herdr.dev). It has purple cut-corner plates, orange for whatever is selected, heavy Mincho kanji titles and large seven-segment readouts. A command deck above the terminals holds live agent counts and an orange/purple signal field; click the field to hold it still. Beside it, 機体状態 HOST reads out the Mac itself: CPU, memory, network, thermal state and power. Its top strip is a warning light: a thin red rule normally, solid red when an agent needs you. Red is kept for warnings only. Terminals are about 80% opaque, so the topo map shows faintly behind them. Agents show up as HUD cards with a **SYNC RATE**, the percent of their context window still free. Claude Code cards also show 圧縮, how many times the session has compacted, and 記録, its transcript size. A new agent opens with a full-window 作戦開始 card. A blocked agent turns into a blinking hazard frame.
+A late-90s command-center HUD layout for [herdr-app](https://herdr.dev). It has purple cut-corner plates, orange for whatever is selected, heavy Mincho kanji titles and large seven-segment readouts. A command deck above the terminals holds live agent counts and an orange/purple signal field; click the field to hold it still. Beside it, 機体状態 HOST reads out the Mac itself: CPU, memory, network, thermal state and power. Its top strip is a warning light: a thin red rule normally, solid red when an agent needs you. Red is kept for warnings only. Terminals are about 80% opaque, so the topo map shows faintly behind them. Agents show up as HUD cards with a **SYNC RATE**, the percent of their context window still free. Claude Code cards also show 圧縮, how many times the session has compacted, and 記録, its transcript size. A new agent opens with a full-window 作戦開始 card. A blocked agent turns into a blinking hazard frame. Notifications come up with a kanji plate: 警告 when an agent needs you, 通報 when one finished.
 
 ![EVA HUD](preview.png)
 
@@ -12,7 +12,7 @@ All art is original vector work. It recreates a mood (colors, type, shapes), not
 
 - `layouts/eva.json`: the layout, with `layouts/eva.png` as its preview in Settings → Look.
 - `themes/eva.json`: the theme. Near-black terminals with purple, orange and green ANSI colors. Herdr's own palette, picker and menus pick it up too.
-- `mods/`: the nine mods the layout draws with. Eight are cloned from Herdr 0.1.12's shipped mods, with behavior unchanged and only the look replaced; `eva-launch` is new.
+- `mods/`: the ten mods the layout draws with. Eight are cloned from Herdr's shipped mods, with behavior unchanged and only the look replaced; `eva-launch` and `eva-toast` are new.
   - `eva-chrome`: the command deck with its agent counts, native animated signal field (`command.js`) and 機体状態 HOST panel (`machine.js`), sidebar brand row and local clock. It also holds `wallpaper.png`.
   - `eva-spaces`: 作業区画 SPACES, with branch, ahead/behind and a status label.
   - `eva-agents`: 稼働体 AGENTS cards, with the SYNC RATE gauge (`sync.js`). The readout uses the Digital-7 Mono font in `fonts/`, by Sizenko Alexander of [Style-7](http://www.styleseven.com), freeware for non-commercial use.
@@ -21,10 +21,11 @@ All art is original vector work. It recreates a mood (colors, type, shapes), not
   - `eva-status`: the status bar, with the agent count, NEEDS YOU and the MOTION toggle. MOTION off stills every animation: the signal field and the warning blink.
   - `eva-files`, `eva-changes`: the 資料 FILES and 変更 CHANGES panels.
   - `eva-launch`: the 作戦開始 card `eva-agents` opens over the window when a new agent starts. It shows for about 1.8 seconds, doesn't take the keyboard, and closes on click. MOTION off skips it.
+  - `eva-toast`: notifications, picked by the layout's `"toast": "eva-toast"`. A cut-corner plate shows the level: 警告 (red, blinking) for errors and agents that need you, 注意 (red) for warnings, 完了 (green) for success, 通報 (purple) for everything else. Click one to run its action, such as going to the agent, and close it.
 
 ## Requirements
 
-- herdr-app 0.1.12. The mods are clones of its shipped mods, so a newer Herdr may need its changes merged in.
+- herdr-app 0.1.15 or newer. `eva-toast` needs 0.1.15's layout `toast` field. The mods are clones of Herdr's shipped mods, so a later Herdr may need its changes merged in.
 - macOS for the Mincho titles (Hiragino Mincho ProN). On other systems they fall back to another font.
 - For SYNC RATE: `sqlite3` and `jq` on PATH (both ship with macOS).
 
@@ -73,6 +74,6 @@ Edit in `~/.config/herdr-app/` (Herdr ignores edits behind symlinks), then copy 
 bun install && bunx --bun vitest run
 ```
 
-Every mod carries its own identical `eva.js` (colors and drawing helpers), because a mod can import only from its own folder. Change one, then copy it to all nine.
+Every mod carries its own identical `eva.js` (colors and drawing helpers), because a mod can import only from its own folder. Change one, then copy it to all ten.
 
 See [RECIPE.md](RECIPE.md) for the full spec: every color, size and shape, how each mod draws, and what tripped the build up.
