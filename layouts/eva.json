@@ -2,6 +2,7 @@
   "id": "root",
   "type": "row",
   "theme": "eva",
+  "toast": "eva-toast",
   "preview": "layouts/eva.png",
   "titlebar": "none",
   "traffic_lights": [

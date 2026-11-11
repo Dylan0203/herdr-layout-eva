@@ -4,7 +4,7 @@
 set -eu
 HERDR="${HERDR_APP_HOME:-$HOME/.config/herdr-app}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-MODS="eva-tabs eva-pane eva-chrome eva-status eva-spaces eva-agents eva-files eva-changes eva-launch"
+MODS="eva-tabs eva-pane eva-chrome eva-status eva-spaces eva-agents eva-files eva-changes eva-launch eva-toast"
 
 # Every mod carries its own eva.js (mods import only from their own folder): they must match.
 first=""
