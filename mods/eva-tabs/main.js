@@ -1,5 +1,5 @@
 import { View, div, svg, image } from "gpui-kit";
-import { h_flex } from "gpui-base";
+import { h_flex, ScrollHandle } from "gpui-base";
 import { spaces, panes, run, openOverlay, theme, window, shared, layout, settings } from "herdr";
 import { C, MONO, cut, fill, stroke } from "./eva.js";
 
@@ -17,6 +17,7 @@ function find(node, id) {
 export default class Tabs extends View {
   init() {
     this.pressed = null;
+    this.scroll = ScrollHandle.new();
     this.panels = JSON.parse(localStorage.getItem("panels") ?? "{}");
   }
 
@@ -52,6 +53,13 @@ export default class Tabs extends View {
     const t = theme();
     const space = spaces().find(p => p.active);
     const shown = space?.tabs ?? [];
+    const active = shown.findIndex(tab => tab.active);
+    const selected = shown[active]?.id;
+    if (selected !== this.selected || active !== this.selectedIndex) {
+      this.selected = selected;
+      this.selectedIndex = active;
+      if (active >= 0) this.scroll.scroll_to_item(active);
+    }
     const stop = (_e, cx) => cx.stop_propagation();
     const button = (id, label, action) => div().id(id).size(26).flex_none().flex().items_center().justify_center().rounded(6).text_color(t.dim).hover(s => s.bg(t.hover).text_color(t.foreground))
       .on_mouse_down("left", stop).on_click(action).child(label);
@@ -60,6 +68,8 @@ export default class Tabs extends View {
       const name = /^tb\d+$/.test(c.name) ? program?.name ?? "Terminal" : c.name;
       const shape = cut(TAB_W, TAB_H, { tr: CUT });
       return h_flex().id(`tab-${c.id}`).relative().w(TAB_W).h(TAB_H).pl(10).pr(CUT + 4).gap(7).items_center().flex_none().text_size(12)
+        // A rename or status dot on this or an earlier tab can push the active one out.
+        .when(i <= active, el => el.on_size_change((_size, cx) => { this.scroll.scroll_to_item(active); cx.notify(); }))
         .text_color(c.active ? "#ffffff" : t.muted)
         .child(c.active ? fill(shape, C.purple) : stroke(shape, C.purple))
         .when(c.active, el => el.child(div().absolute().top(0).left(0).w(TAB_W - CUT).h(3).bg(C.orange)))
@@ -98,7 +108,9 @@ export default class Tabs extends View {
     return h_flex().size_full().min_w(0).px(10).pl(lightsPadding).gap(3).items_center().border_b(1).border_color("#ff6a0080")
       .on_mouse_up("left", () => { this.pressed = null; })
       .on_scroll_wheel(e => { if (Math.abs(e.delta.y) >= 1) run(e.delta.y > 0 ? "tab.prev" : "tab.next"); })
-      .child(h_flex().id("tab-scroll").flex_1().min_w(0).h_full().items_end().pb(0).gap(6).overflow_x_scrollbar().children(shown.map(item)))
+      .child(h_flex().id("tab-scroll").flex_1().min_w(0).h_full().items_end().pb(0).gap(6).overflow_x_scrollbar().track_scroll(this.scroll)
+        .on_size_change((_size, cx) => { if (active >= 0) { this.scroll.scroll_to_item(active); cx.notify(); } })
+        .children(shown.map(item)))
       .child(button("tab-new", div().text_color(C.orange).text_size(16).child("+"), () => openOverlay({ mod: "new-menu", kind: "popup", width: 250, height: 512 })))
       .when(enabled.includes("files"), el => el.child(panelButton("files", "Files", "mods/files/file.svg")))
       .when(enabled.includes("changes"), el => el.child(panelButton("changes", "Changes", "mods/changes/changes.svg")))
