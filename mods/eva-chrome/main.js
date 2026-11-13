@@ -4,6 +4,7 @@ import { theme, run, props, window, shared, setShared, updates, layout } from "h
 import { C, MINCHO, MONO } from "./eva.js";
 import { commandDeck } from "./command.js";
 import { startMachine, ticking } from "./machine.js";
+import { startUpdates } from "./update.js";
 
 function find(node, id) {
   if (node?.id === id) return node;
@@ -34,6 +35,7 @@ export default class WorkspaceChrome extends View {
     if (props()?.footer) cx.timer.every(1000, (cx) => cx.notify());
     if (props()?.command) {
       startMachine(cx);
+      if (props().updates !== false) startUpdates(cx);
       cx.timer.every(1000, (cx) => ticking() && cx.notify());
     }
   }
