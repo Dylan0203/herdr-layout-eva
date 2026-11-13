@@ -6,6 +6,8 @@ import {
   elapsedMs,
   countCompacts,
   formatSize,
+  claudeVersion,
+  isOlder,
 } from "../mods/eva-agents/sync.js";
 
 const line = (o) => JSON.stringify(o);
@@ -126,5 +128,33 @@ describe("formatSize", () => {
     expect(formatSize(46979688)).toBe("45M");
     expect(formatSize(489 * 1024 ** 2)).toBe("489M");
     expect(formatSize(4.7 * 1024 ** 3)).toBe("4.7G");
+  });
+});
+
+describe("claudeVersion", () => {
+  it("從 claude --version 的輸出取出版本號", () => {
+    expect(claudeVersion("2.1.323 (Claude Code)\n")).toBe("2.1.323");
+  });
+
+  it("沒有版本號就回 null", () => {
+    expect(claudeVersion("")).toBeNull();
+    expect(claudeVersion("command not found: claude")).toBeNull();
+  });
+});
+
+describe("isOlder", () => {
+  it("逐段用數字比，不是字串比", () => {
+    expect(isOlder("2.1.99", "2.1.323")).toBe(true);
+    expect(isOlder("2.1.323", "2.1.99")).toBe(false);
+    expect(isOlder("1.9.0", "2.0.0")).toBe(true);
+  });
+
+  it("同版不算舊", () => {
+    expect(isOlder("2.1.323", "2.1.323")).toBe(false);
+  });
+
+  it("任一邊不知道就不算舊", () => {
+    expect(isOlder("2.1.1", null)).toBe(false);
+    expect(isOlder(undefined, "2.1.1")).toBe(false);
   });
 });

@@ -6,7 +6,9 @@
 // Reads: ~/.claude/sessions/<pid>.json, the session's jsonl (its last few MB,
 // plus a compaction count over bytes appended since the last poll), ~/.claude/settings.json; for Codex, ~/.codex/state_*.sqlite and its
 // rollout file; for OpenCode, ~/.local/share/opencode/opencode.db (read-only)
-// and ~/.cache/opencode/models.json. Runs pgrep, ps, lsof, sqlite3, grep, jq.
+// and ~/.cache/opencode/models.json. Runs pgrep, ps, lsof, sqlite3, grep, jq,
+// and `claude --version` (every 10 min) to flag Claude Code sessions older than
+// the installed CLI.
 // Nothing leaves the machine.
 
 import { terminals, exec, home, readTextFile } from "herdr";
@@ -15,6 +17,7 @@ const POLL = 15000;
 const CLAUDE_WINDOW = 1000000;
 const rates = new Map();
 const stats = new Map();
+const versions = new Map();
 
 const rows = (text) =>
   text.split("\n").flatMap((line) => {
@@ -83,6 +86,18 @@ export function formatSize(bytes) {
   if (k < 1000) return `${Math.round(k)}K`;
   if (k < 1024 * 1000) return `${Math.round(k / 1024)}M`;
   return `${(k / 1024 / 1024).toFixed(1)}G`;
+}
+
+export const claudeVersion = (text) =>
+  text.match(/\d+\.\d+\.\d+/)?.[0] ?? null;
+
+// Numeric per segment; an unknown side is never older.
+export function isOlder(running, installed) {
+  if (!running || !installed) return false;
+  const a = running.split(".").map(Number);
+  const b = installed.split(".").map(Number);
+  const i = a.findIndex((n, k) => n !== b[k]);
+  return i >= 0 && a[i] < b[i];
 }
 
 // macOS `ps -o etime`: [[dd-]hh:]mm:ss.
@@ -177,6 +192,7 @@ async function claude(pid, address) {
     (await readTextFile(`${home()}/.claude/sessions/${pid}.json`)) ?? "null",
   );
   if (!session) return null;
+  session.version ? versions.set(address, session.version) : versions.delete(address);
   const folder = session.cwd.replace(/[^A-Za-z0-9]/g, "-");
   const file = `${home()}/.claude/projects/${folder}/${session.sessionId}.jsonl`;
   const settings = JSON.parse(
@@ -286,6 +302,17 @@ async function opencode(pid) {
   return opencodeRate(JSON.parse(row.tokens), window);
 }
 
+// A login shell, so PATH finds claude however it was installed.
+const INSTALLED_EVERY = 600000;
+let installed = { version: null, at: -Infinity };
+async function installedClaude() {
+  if (Date.now() - installed.at < INSTALLED_EVERY) return;
+  installed.at = Date.now();
+  installed.version = claudeVersion(
+    await sh("sh", ["-lc", "claude --version"]).catch(() => ""),
+  );
+}
+
 const READERS = { claude, codex, opencode };
 
 /** The agent's sync rate (0–100), or null when unknown. */
@@ -294,10 +321,19 @@ export const syncRate = (address) => rates.get(address) ?? null;
 /** A Claude Code agent's compaction count and transcript bytes, or null. */
 export const transcriptStats = (address) => stats.get(address) ?? null;
 
+/** A Claude Code agent's version, and whether the installed CLI is newer; or null. */
+export function agentVersion(address) {
+  const version = versions.get(address);
+  return version
+    ? { version, stale: isOlder(version, installed.version) }
+    : null;
+}
+
 async function poll() {
   const live = terminals().filter(
     (t) => READERS[t.program?.key] && !t.address.includes("/"),
   );
+  if (live.some((t) => t.program.key === "claude")) await installedClaude();
   for (const t of live) {
     try {
       let value = null;
@@ -311,7 +347,7 @@ async function poll() {
     }
   }
   const alive = new Set(live.map((t) => t.address));
-  for (const map of [rates, stats])
+  for (const map of [rates, stats, versions])
     for (const address of map.keys())
       if (!alive.has(address)) map.delete(address);
 }
