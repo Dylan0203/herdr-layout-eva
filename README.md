@@ -13,7 +13,7 @@ All art is original vector work. It recreates a mood (colors, type, shapes), not
 - `layouts/eva.json`: the layout, with `layouts/eva.png` as its preview in Settings → Look.
 - `themes/eva.json`: the theme. Near-black terminals with purple, orange and green ANSI colors. Herdr's own palette, picker and menus pick it up too.
 - `mods/`: the ten mods the layout draws with. Eight are cloned from Herdr's shipped mods, with behavior unchanged and only the look replaced; `eva-launch` and `eva-toast` are new.
-  - `eva-chrome`: the command deck with its agent counts, native animated signal field (`command.js`) and 機体状態 HOST panel (`machine.js`), sidebar brand row and local clock. It also holds `wallpaper.png`.
+  - `eva-chrome`: the command deck with its agent counts, native animated signal field (`command.js`) and 機体状態 HOST panel (`machine.js`), the daily update check (`update.js`, with the installed version in `version.js`), sidebar brand row and local clock. It also holds `wallpaper.png`.
   - `eva-spaces`: 作業区画 SPACES, with branch, ahead/behind and a status label.
   - `eva-agents`: 稼働体 AGENTS cards, with the SYNC RATE gauge (`sync.js`). The readout uses the Digital-7 Mono font in `fonts/`, by Sizenko Alexander of [Style-7](http://www.styleseven.com), freeware for non-commercial use.
   - `eva-tabs`: the tab bar.
@@ -39,6 +39,21 @@ Install the EVA layout from https://github.com/Dylan0203/herdr-layout-eva by fol
 
 It copies the layout, theme and mods into `~/.config/herdr-app/` and switches to the layout. To go back, open the palette (`cmd-shift-p`) and pick "Layout: Herdr".
 
+## Updating
+
+Herdr doesn't update installed layouts, so there are two ways to hear about a new version:
+
+- On GitHub, **Watch → Custom → Releases** on this repo. GitHub then notifies you of every release.
+- Versions after 0.6.0 also check GitHub themselves once a day and post a 通報 toast when a newer release is out. Click it to open the release notes.
+
+To update, ask your coding agent:
+
+```text
+Update the EVA layout from https://github.com/Dylan0203/herdr-layout-eva by following the Update section of its RECIPE.md.
+```
+
+It copies the new mods and theme over yours, and asks before replacing a `layouts/eva.json` you've changed.
+
 ## Privacy
 
 `eva-spaces` runs `git` in each space's folder and `hc machine ls`, as the shipped spaces list does.
@@ -54,7 +69,7 @@ For SYNC RATE, `eva-agents` does the following every 15 seconds for each local a
 
 For 機体状態 HOST, the command deck runs `pmset`, `memory_pressure`, `sysctl`, `ps`, `route`, `netstat` and `ioreg` every 5 seconds, in one shell call. It reads only totals: CPU percent, memory pressure, interface byte counters, thermal throttling, battery state and charging power.
 
-Nothing reaches the network.
+The only network call is the update check: once a day `eva-chrome` asks `api.github.com` for this repo's latest release, sending nothing but a generic `herdr-layout-eva` user agent. To turn it off, add `"updates": false` to the command deck block's props in `~/.config/herdr-app/layouts/eva.json` (the block with `"command": true`). Nothing else reaches the network.
 
 ## Known limits
 
@@ -74,6 +89,8 @@ Edit in `~/.config/herdr-app/` (Herdr ignores edits behind symlinks), then copy 
 ./scripts/export.sh   # refuses if the eva.js copies differ
 bun install && bunx --bun vitest run
 ```
+
+Before tagging a release, bump `mods/eva-chrome/version.js` to the new version. Otherwise every install keeps announcing the update it already has; a test fails once the version lags the latest tag.
 
 Every mod carries its own identical `eva.js` (colors and drawing helpers), because a mod can import only from its own folder. Change one, then copy it to all ten.
 

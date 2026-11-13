@@ -61,6 +61,7 @@ Palette (also in every mod's `eva.js`): ink `#0a0a0a`, deep `#160e24`, slab `#1a
 - **Agents:** click a card to focus its pane. The chevron in the name row folds or unfolds its sub-agents. Hovering swaps `T+…` for a pin button. The sort button switches between Priority and Grouped by space.
 - **Tabs:** click to select, double-click to rename, drag to reorder, scroll the wheel to switch, right-click for the menu. The × closes the active tab.
 - **Pane headers:** click to focus. Hover to show split right, split down, zoom and close.
+- **Update notice:** once per newer release, a 通報 toast `EVA LAYOUT v0.7.0 OUT` / `Ask your agent to update it.`; clicking it opens the releases page in the browser.
 - **Palette hint:** clicking it opens the palette bound under `layout:eva` in keys.json (`mod.open:<a palette mod>`) if there is one, else Herdr's `app.palette`.
 
 ## Built from
@@ -84,13 +85,17 @@ Palette (also in every mod's `eva.js`): ink `#0a0a0a`, deep `#160e24`, slab `#1a
   - **Claude Code:** read `~/.claude/sessions/<pid>.json` for `sessionId` and `cwd`, then the last 20 `"usage"` lines of `~/.claude/projects/<cwd, every non-alphanumeric as ->/<sessionId>.jsonl`. Used is the last main-line (non-sidechain, non-`<synthetic>`) assistant message's `input_tokens + cache_read_input_tokens + cache_creation_input_tokens`. The window is `modelSettings.<model>.autoCompactWindow` from `~/.claude/settings.json`, else a top-level `autoCompactWindow`, else 1,000,000. Only a positive number counts: `"auto"` or `null` falls through, because dividing by a string gave `NaN` and the card drew `00NAN`.
   - **Codex:** only a process whose argv names `codex`. Take the thread from a `resume <id>`, else the newest `threads` row in the newest `~/.codex/state_*.sqlite` for the agent's cwd (`lsof`) with source `cli` or `vscode`. Read the last `token_count` event in its rollout: `info.last_token_usage.input_tokens` against `info.model_context_window`.
   - **OpenCode:** only `opencode` processes that aren't `serve`. Open `~/.local/share/opencode/opencode.db` with `sqlite3 -readonly -json` and query both schemas separately: v2's `session_v2` + `session_message` (type `assistant`, `data.model.{providerID,id}`) and v1's `session` + `message` (`data.role` `assistant`, `data.providerID` / `modelID`). Take the newest top-level session in the agent's cwd updated since the process started (from `ps -o etime`). Used is `tokens.input + tokens.cache.read + tokens.cache.write`. The window is `.[provider].models[model].limit.context` from `~/.cache/opencode/models.json` via `jq`.
-- **Runs programs:** `eva-spaces` keeps the shipped `git` and `hc machine ls` calls. `eva-agents` runs `pgrep`, `ps`, `lsof`, `grep`, `tail`, `head`, `stat`, `sqlite3` and `jq` every 15 seconds. It reads only token counts, session ids, compaction markers and file sizes from the files above. Nothing reaches the network.
+- **Runs programs:** `eva-spaces` keeps the shipped `git` and `hc machine ls` calls. `eva-agents` runs `pgrep`, `ps`, `lsof`, `grep`, `tail`, `head`, `stat`, `sqlite3` and `jq` every 15 seconds. It reads only token counts, session ids, compaction markers and file sizes from the files above. The only network call is the update check below.
+- **Update check** (`eva-chrome/update.js`, only in the copy with `command: true`, skipped when its props say `updates: false`): 60 seconds after start, then hourly, it fetches `https://api.github.com/repos/Dylan0203/herdr-layout-eva/releases/latest` if a day has passed since the last check (`localStorage` `eva.update.checkedAt`), with `User-Agent: herdr-layout-eva`. When the `tag_name` without its `v` is newer than `VERSION` in `version.js`, numerically per segment, and isn't `eva.update.notified`, it posts `notify({title: "EVA LAYOUT v<x.y.z> OUT", body: "Ask your agent to update it.", level: "info", action: {name: "eva-chrome.releases"}})` once. The deck copy's `nextCommand()` turns `releases` into `open https://github.com/Dylan0203/herdr-layout-eva/releases`. Offline, a rate limit or bad JSON stays silent.
 - Icons load from the shipped mods' folders (`mods/workspace-chrome/`, `mods/pane/`, `mods/files/`, `mods/changes/`). The shipped `menu`, `new-menu`, `picker` and palette are used as they are.
 - **`layouts/eva.png`**, the Settings → Look poster, is rendered from `scripts/preview.svg` (a 320×200 viewBox) with `rsvg-convert -w 1280 -h 800 scripts/preview.svg -o layouts/eva.png`.
 - `tests/sync.test.js` covers the parsers with Vitest, aliasing `herdr` to `tests/herdr-stub.js` (`vitest.config.mjs`).
 
 ## Watch out
 
+- `version.js` must be bumped before every release tag, or every install announces the update it already has. `tests/update.test.js` fails once it lags the latest `v*` tag.
+- Herdr keeps a mod's `localStorage` in memory: editing `data/<mod>/store-*.json` while it runs changes nothing. To re-test the update toast, lower `VERSION` and clear the keys from code.
+- A toast `action` runs only Herdr commands, and none opens a URL. Route it to `<mod>.<command>` and `exec("open", [url])` from that mod's `nextCommand()`.
 - `terminal_opacity` applies twice on a terminal, so what shows is 1 − (1 − x)². 0.88 shows 99% and hides the wallpaper; 0.55 shows about 80%. Match the pane header to the result (`#0a0a0acc`), not to x.
 - A theme file color must be `#rrggbb`. Put translucent colors on layout nodes or in the mods.
 - `colors.border` also draws the separators and frames in `menu`, `new-menu`, `files` and `changes`. Near-black makes them vanish; `#3a2a55` keeps them visible.
@@ -125,7 +130,7 @@ Palette (also in every mod's `eva.js`): ink `#0a0a0a`, deep `#160e24`, slab `#1a
 
 Run these from a clone of this repo.
 
-1. Tell the person what `eva-agents` reads and runs (Built from → Runs programs) before copying.
+1. Tell the person what `eva-agents` reads and runs (Built from → Runs programs) before copying, and that `eva-chrome` checks GitHub once a day for a newer release (Built from → Update check), which `"updates": false` in the command deck block's props turns off. Suggest Watch → Custom → Releases on the GitHub repo too.
 2. Copy the layout, theme and mods. Never overwrite: if any `eva-*` name, `layouts/eva.json` or `themes/eva.json` exists, rename the new one (its folder or file, the `mod` names in the layout, and the mod's own `mods/<name>/` paths).
 
    ```sh
@@ -142,11 +147,28 @@ Run these from a clone of this repo.
 
 4. Switch to it: `herdr-app do layout.switch --name eva`, or the palette → "Layout: Eva". The person's own layout stays one palette entry away.
 
+## Update
+
+Run these from a fresh clone of this repo.
+
+1. Compare `VERSION` in `~/.config/herdr-app/mods/eva-chrome/version.js` (missing means 0.6.0 or older) with this clone's. Summarise the GitHub releases in between for the person.
+2. Copy the mods and theme over the installed ones. Mods are code, not settings, so replacing them is safe:
+
+   ```sh
+   cp themes/eva.json ~/.config/herdr-app/themes/
+   for m in mods/eva-*; do rsync -a --delete --exclude gpui-kit.d.ts --exclude jsconfig.json "$m/" ~/.config/herdr-app/mods/"$(basename "$m")"/; done
+   cp layouts/eva.png ~/.config/herdr-app/layouts/
+   ```
+
+   If the install renamed a mod (Install step 2), copy into that name instead.
+3. `layouts/eva.json`: if the installed one differs from this clone's, show the person the diff and ask before replacing it. People add their own blocks there; carrying over only the new lines is often the better answer.
+4. Run the Install section's checks (step 3) and confirm `herdr-app status` shows `"errors": []`.
+
 ## Done when
 
 - `herdr-app check` passes for all ten `eva-*` mods.
 - `herdr-app status` shows `"errors": []` after `layout.switch {"name": "eva"}`.
-- `bunx --bun vitest run` passes (50 tests).
+- `bunx --bun vitest run` passes (66 tests).
 - A screenshot shows the command deck with a red-ruled strip, the moving orange/purple schematic and large agent counts, SYNC RATE cards, a purple active tab and space with orange edges, an orange-outlined focused card, an orange focused pane header, and white Mincho section titles.
 - An agent that finishes while you look elsewhere posts a purple 通報 toast; clicking it goes to that agent.
 - Starting a new agent plays the 作戦開始 card over the whole window once; restarting Herdr with agents already open plays nothing.
