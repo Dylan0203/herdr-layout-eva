@@ -9,6 +9,7 @@ import {
   formatBytes,
   snapshot,
   countdown,
+  parseCharge,
   SEP,
 } from "../mods/eva-chrome/machine.js";
 
@@ -186,5 +187,22 @@ describe("countdown", () => {
   it("格式化成 HH:MM:SS，不會變成負數", () => {
     expect(countdown(3 * 3600000 + 12 * 60000 + 5000, 0)).toBe("03:12:05");
     expect(countdown(0, 5000)).toBe("00:00:00");
+  });
+});
+
+describe("parseCharge", () => {
+  const ioreg = (charging, power) =>
+    `    "IsCharging" = ${charging}\n    "BatteryData" = {"CurrentCapacity"=32,"BatteryPower"=${power},"FullyCharged"=0}`;
+
+  it("充電中回傳充進電池的瓦數", () => {
+    expect(parseCharge(ioreg("Yes", 101199))).toBeCloseTo(101.199);
+  });
+
+  it("沒在充電就是 null", () => {
+    expect(parseCharge(ioreg("No", 0))).toBeNull();
+  });
+
+  it("沒有電池（桌機）就是 null", () => {
+    expect(parseCharge("")).toBeNull();
   });
 });

@@ -75,7 +75,10 @@ function host(m) {
   const power = !battery || battery.external
     ? battery?.percent == null
       ? row("電源", "AC", unit("外部電源 / EXTERNAL", C.green))
-      : meter("電源", "AC", battery.percent, false)
+      : m.charge == null
+        ? meter("電源", "AC", battery.percent, false)
+        : row("電源", "AC", gauge(battery.percent, C.green), digits(pct(battery.percent), C.green), unit("%"),
+          digits(String(Math.round(m.charge)), C.green), unit("W"))
     : (() => {
       // On internal power the row grows into the 活動限界 clock: seconds from render, hundredths native.
       const tone = battery.percent < 20 ? C.red : C.green;

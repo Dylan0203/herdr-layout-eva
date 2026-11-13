@@ -1,4 +1,5 @@
-// Host readouts for the command deck: CPU, memory, network, thermal state and power.
+// Host readouts for the command deck: CPU, memory, network, thermal state, power
+// and the watts going into the battery while it charges.
 // One `sh -c` every POLL ms prints every source, split by SEP. macOS only; no sudo.
 import { exec } from "herdr";
 
@@ -13,6 +14,7 @@ const SCRIPT = [
   "ps -A -o %cpu=",
   "i=$(route -n get default 2>/dev/null | awk '/interface:/{print $2}'); netstat -ibn -I \"${i:-en0}\"",
   "pmset -g therm",
+  "ioreg -rn AppleSmartBattery | grep -E '\"IsCharging\" = |\"BatteryData\" = '",
 ].join(`; echo ${SEP}; `);
 
 export function parseBattery(text) {
@@ -70,6 +72,14 @@ export function netRate(prev, next) {
   };
 }
 
+// Watts into the battery (BatteryData.BatteryPower, mW), only while charging.
+// The battery gauge refreshes it every 20-60 s. No battery (a desktop Mac): null.
+export function parseCharge(text) {
+  if (!/"IsCharging" = Yes/.test(text)) return null;
+  const mw = text.match(/"BatteryData" = \{[^}]*"BatteryPower"=(\d+)/);
+  return mw ? Number(mw[1]) / 1000 : null;
+}
+
 // Apple Silicon has no sudo-free temperature reading; pmset only reports throttling.
 export function parseThermal(text) {
   const limit = text.match(/CPU_Speed_Limit\s*=\s*(\d+)/);
@@ -112,6 +122,7 @@ export function snapshot(stdout, prev, now) {
     ps = "",
     netstat = "",
     therm = "",
+    charge = "",
   ] = stdout.split(SEP).map((s) => s.trim());
   const counters = parseNet(netstat);
   const net = counters && { ...counters, at: now };
@@ -124,6 +135,7 @@ export function snapshot(stdout, prev, now) {
     net,
     rate: netRate(prev?.net, net),
     thermal: parseThermal(therm),
+    charge: parseCharge(charge),
   };
 }
 
