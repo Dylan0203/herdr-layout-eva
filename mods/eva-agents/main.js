@@ -333,7 +333,7 @@ export default class Agents extends View {
         .child(h_flex().h(20).flex_none().gap(8).items_center().min_w(0)
           .child(detail).when(Boolean(machine), el => el.child(host))
           .when(Boolean(records), el => el.child(h_flex().flex_none().gap(7).children(records ?? [])))
-          .child(this.tabs(status, col >= 280)))
+          .child(this.tabs(status, col >= 400)))
         .child(div().flex_1())
         .when(above, el => el.child(h_flex().h(12).flex_none().gap(6).items_end()
           .child(div().font_family(MINCHO).font_weight(700).text_size(12).line_height(1).text_color(C.white).child("同調率"))
