@@ -199,6 +199,19 @@
           "content": {
             "mod": "eva-status"
           }
+        },
+        {
+          "id": "switch-watch",
+          "type": "block",
+          "size": {
+            "px": 0
+          },
+          "content": {
+            "mod": "eva-switch",
+            "props": {
+              "watch": true
+            }
+          }
         }
       ]
     }
