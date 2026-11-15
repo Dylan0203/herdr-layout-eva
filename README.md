@@ -4,6 +4,8 @@ A late-90s command-center HUD layout for [herdr-app](https://herdr.dev). It has 
 
 ![EVA HUD](preview.png)
 
+![作戦開始 card and the 区画移行 / 接続切替 switch card](motion.gif)
+
 ![機体状態 HOST panel and agent counts](host.gif)
 
 All art is original vector work. It recreates a mood (colors, type, shapes), not any show's logos, characters or screenshots.
