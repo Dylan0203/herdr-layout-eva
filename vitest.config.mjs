@@ -1,4 +1,5 @@
-// Mods import Herdr's runtime module "herdr"; tests swap in a stub.
+// Mods import Herdr's runtime modules "herdr" and "gpui-kit"; tests swap in stubs.
+const stub = (name) => new URL(`./tests/${name}`, import.meta.url).pathname;
 export default {
-  resolve: { alias: { herdr: new URL("./tests/herdr-stub.js", import.meta.url).pathname } },
+  resolve: { alias: { herdr: stub("herdr-stub.js"), "gpui-kit": stub("gpui-stub.js") } },
 };

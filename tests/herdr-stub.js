@@ -4,3 +4,4 @@ export const home = () => "/nonexistent";
 export const readTextFile = async () => null;
 export const notify = () => {};
 export const nextCommand = () => new Promise(() => {});
+export const settings = () => ({});
