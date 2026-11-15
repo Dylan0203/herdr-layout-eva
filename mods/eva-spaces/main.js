@@ -6,7 +6,7 @@
 import { View, div, svg } from "gpui-kit";
 import { v_flex, h_flex } from "gpui-base";
 import { spaces, machines, panes, run, openOverlay, exec, hc, theme, shared, setShared, watchFolder, window, layout } from "herdr";
-import { C, MINCHO, MONO, cut, fill, line, badge, warning } from "./eva.js";
+import { C, MINCHO, MONO, cut, fill, line, badge, warning, unzoom } from "./eva.js";
 
 function find(node, id) {
   if (node?.id === id) return node;
@@ -471,8 +471,9 @@ export default class Spaces extends View {
     const collapsed = narrow();
     return v_flex().id("eva-spaces").size_full().min_h(0).text_size(13)
       .on_size_change((size, cx) => {
-        if (Math.abs(size.width - this.width) < 1) return;
-        this.width = size.width;
+        const width = unzoom(size.width);
+        if (Math.abs(width - this.width) < 1) return;
+        this.width = width;
         cx.notify();
       })
       .child(h_flex().relative().h(collapsed ? 31 : 56).pl(14).pr(10).pt(collapsed ? 0 : 10).pb(collapsed ? 0 : 10).gap(8)

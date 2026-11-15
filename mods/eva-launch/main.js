@@ -7,7 +7,7 @@
 import { View, div, Background } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
 import { props, closeOverlay } from "herdr";
-import { C, MINCHO, MONO, fill } from "./eva.js";
+import { C, MINCHO, MONO, fill, unzoom } from "./eva.js";
 
 // The card's one accent: bands, rules and the caption.
 const ACCENT = C.white;
@@ -104,12 +104,13 @@ export default class Launch extends View {
       .overflow_hidden()
       .cursor_pointer()
       .on_size_change((size, cx) => {
+        const next = { width: unzoom(size.width), height: unzoom(size.height) };
         if (
-          Math.abs(size.width - width) < 1 &&
-          Math.abs(size.height - height) < 1
+          Math.abs(next.width - width) < 1 &&
+          Math.abs(next.height - height) < 1
         )
           return;
-        this.size = size;
+        this.size = next;
         cx.notify();
       })
       .on_click(() => this.close())

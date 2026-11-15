@@ -1,7 +1,7 @@
 import { div, Background } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
 import { agents, spaces, shared, setShared } from "herdr";
-import { C, MINCHO, MONO, line, motion, fill, cut } from "./eva.js";
+import { C, MINCHO, MONO, line, motion, fill, cut, unzoom } from "./eva.js";
 import { machine, formatBytes, countdown } from "./machine.js";
 
 // Hundredths for the 活動限界 clock: one lap a second, run natively by frames().
@@ -132,8 +132,9 @@ export function commandDeck(view) {
   const current = spaces().find(s => s.active);
   return v_flex().id("command-deck").size_full().bg("#0f0a189e").overflow_hidden().border_b(2).border_color(C.purple)
     .on_size_change((size, cx) => {
-      if (Math.abs(size.width - view.deckWidth) < 1) return;
-      view.deckWidth = size.width;
+      const width = unzoom(size.width);
+      if (Math.abs(width - view.deckWidth) < 1) return;
+      view.deckWidth = width;
       cx.notify();
     })
     // The strip is a warning light: a red rule while agents run on their own, solid red when one needs you.
@@ -155,9 +156,10 @@ export function commandDeck(view) {
         .child(div().id("signal-size").w_full().flex_1().min_h(0).border_y(1).border_color(C.dim)
           .cursor_pointer().on_click(toggleSignal)
           .on_size_change((size, cx) => {
-            const height = Math.max(16, size.height - 2);
-            if (Math.abs(size.width - view.signalWidth) < 1 && Math.abs(height - view.signalHeight) < 1) return;
-            view.signalWidth = size.width;
+            const width = unzoom(size.width);
+            const height = Math.max(16, unzoom(size.height) - 2);
+            if (Math.abs(width - view.signalWidth) < 1 && Math.abs(height - view.signalHeight) < 1) return;
+            view.signalWidth = width;
             view.signalHeight = height;
             cx.notify();
           }).child(signal(view.signalWidth, view.signalHeight)))

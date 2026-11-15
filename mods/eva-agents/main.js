@@ -3,7 +3,7 @@
 import { View, div, image, svg } from "gpui-kit";
 import { v_flex, h_flex } from "gpui-base";
 import { agents, terminals, panes, focused, spaces, run, theme, shared, setShared, setAgentOrder, openOverlay, closeOverlay, props, window, layout } from "herdr";
-import { C, MINCHO, MONO, TONE, LABEL, cut, fill, stroke, line, hazard, blink, motion } from "./eva.js";
+import { C, MINCHO, MONO, TONE, LABEL, cut, fill, stroke, line, hazard, blink, motion, unzoom } from "./eva.js";
 import { startSync, syncRate, transcriptStats, agentVersion, formatSize } from "./sync.js";
 
 const DIGITAL = "Digital-7 Mono";
@@ -519,8 +519,9 @@ export default class Agents extends View {
       .border_color("#ff6a0059")
       .text_size(13)
       .on_size_change((size, cx) => {
-        if (Math.abs(size.width - this.width) < 1) return;
-        this.width = size.width;
+        const width = unzoom(size.width);
+        if (Math.abs(width - this.width) < 1) return;
+        this.width = width;
         cx.notify();
       })
       .when(!collapsed, (el) =>

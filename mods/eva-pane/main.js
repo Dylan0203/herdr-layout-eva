@@ -6,7 +6,7 @@
 import { View, div, svg, image } from "gpui-kit";
 import { h_flex } from "gpui-base";
 import { panes, props, run, theme, home } from "herdr";
-import { C, MONO, fill, badge, warning } from "./eva.js";
+import { C, MONO, fill, badge, warning, unzoom } from "./eva.js";
 
 const H = 30,
   SLANT = 18;
@@ -78,8 +78,9 @@ export default class Pane extends View {
       .border_color(on ? "#ff6a0059" : "#6b3fa066")
       .text_size(12)
       .on_size_change((size, cx) => {
-        if (Math.abs(size.width - this.width) < 1) return;
-        this.width = size.width;
+        const width = unzoom(size.width);
+        if (Math.abs(width - this.width) < 1) return;
+        this.width = width;
         cx.notify();
       })
       .on_hover((hovered, cx) => {

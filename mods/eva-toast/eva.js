@@ -1,7 +1,7 @@
 // Shared EVA look. Each eva-* mod carries its own copy: mods load modules
 // only from their own folder. Edit one, then copy it to the others.
 import { div, PathBuilder, Background } from "gpui-kit";
-import { shared, setShared } from "herdr";
+import { shared, setShared, settings } from "herdr";
 
 export const C = {
   ink: "#0a0a0a",
@@ -137,3 +137,8 @@ export function warning(id, text = LABEL.blocked, size = 10) {
       ]),
   );
 }
+
+// on_size_change reports window px, but a mod draws in zoomed units: divide by the
+// person's zoom, as Herdr's own picker does. A missing or bad zoom leaves px as is.
+export const toUnits = (px, zoom) => px / (Number(zoom) > 0 ? Number(zoom) : 1);
+export const unzoom = (px) => toUnits(px, settings()?.zoom);
