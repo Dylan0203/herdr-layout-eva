@@ -3,6 +3,8 @@
 import { View, div, image, svg } from "gpui-kit";
 import { v_flex, h_flex } from "gpui-base";
 import { agents, terminals, panes, focused, spaces, run, theme, shared, setShared, setAgentOrder, openOverlay, closeOverlay, props, window, layout } from "herdr";
+// setBadge arrived in Herdr 0.1.16: a named import would fail to load on older versions.
+import * as herdr from "herdr";
 import { C, MINCHO, MONO, TONE, LABEL, cut, fill, stroke, line, hazard, blink, motion, unzoom } from "./eva.js";
 import { startSync, syncRate, transcriptStats, agentVersion, formatSize } from "./sync.js";
 
@@ -358,6 +360,9 @@ export default class Agents extends View {
     const sort = sortOf();
     let list = agents();
     this.listed = new Map(list.map((a) => [a.address, a.status]));
+    // The Dock icon shows how many agents need you, as the deck's HOLD count does.
+    const hold = String(list.filter((a) => a.status === "blocked").length || "");
+    if (hold !== this.badge) { this.badge = hold; herdr.setBadge?.(hold || null); }
     const all = terminals();
     this.announce(list, all);
     this.migratePins(all);
