@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { appName, menuItems, pickApps } from "../mods/eva-files/open.js";
+import { appName, menuHeight, menuItems, pickApps } from "../mods/eva-files/open.js";
 
 const HOME = "/Users/me";
 
@@ -102,5 +102,19 @@ describe("menuItems", () => {
   it("每組開頭標 group，畫分隔線用", () => {
     const items = menuItems({ ...file, mac: true, local: true, apps: [] });
     expect(items.map((i) => i.group)).toEqual(["open", "open", "copy", "copy", "terminal"]);
+  });
+});
+
+describe("menuHeight", () => {
+  const item = (group, more) => ({ group, label: "x", action: {}, ...more });
+
+  it("標題列 + 每列 30 + 換組分隔線 9 + 小標 22 + 上下 padding", () => {
+    const items = [item("open"), item("open"), item("copy"), item("with", { heading: true, action: null }), item("with")];
+    expect(menuHeight(items)).toBe(10 + 24 + 30 * 4 + 9 * 2 + 22);
+  });
+
+  it("app 很多時封頂，剩下的在選單裡捲", () => {
+    const items = Array.from({ length: 40 }, () => item("with"));
+    expect(menuHeight(items)).toBe(480);
   });
 });

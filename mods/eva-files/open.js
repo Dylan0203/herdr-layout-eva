@@ -63,3 +63,12 @@ export function menuItems({ abs, rel, dir, mac, local, apps }) {
   }
   return items;
 }
+
+export const ROW = 30, HEADING = 22, HEADER = 24, PAD = 10, RULE = 9, MAX_HEIGHT = 480;
+
+// A popup only gets a real height when it's opened with one, and only then does its list scroll.
+export function menuHeight(items) {
+  let h = PAD + HEADER;
+  items.forEach((it, i) => { h += (it.heading ? HEADING : ROW) + (i > 0 && items[i - 1].group !== it.group ? RULE : 0); });
+  return Math.min(MAX_HEIGHT, h);
+}
