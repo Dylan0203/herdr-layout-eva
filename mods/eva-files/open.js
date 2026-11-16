@@ -42,9 +42,6 @@ export function pickApps(raw, home) {
 
 const parent = (path) => path.replace(/\/[^/]*$/, "") || "/";
 
-// Items for one row. `apps` is null while the list is still being read.
-// Opening and Finder need a local macOS path; a terminal needs a local one.
-// Everyday actions come first; the other apps go last, under an "Open with" heading.
 export function menuItems({ abs, rel, dir, mac, local, apps }) {
   const items = [];
   const add = (group, label, action, more) => items.push({ group, label, action, ...more });
