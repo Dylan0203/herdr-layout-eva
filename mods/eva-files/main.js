@@ -1,6 +1,6 @@
 // A lazy file browser for the focused pane's folder, with bounded read-only previews.
 import { View, div, svg } from "gpui-kit";
-import { v_flex, h_flex, Editor, EditorState } from "gpui-base";
+import { v_flex, h_flex, Editor, EditorState, ScrollHandle } from "gpui-base";
 import { spaces, panes, focused, exec, readTextFile, watchFolder, theme, settings, window, props, openOverlay, closeOverlay, run, home } from "herdr";
 import { C, MINCHO } from "./eva.js";
 import { APPS_SCRIPT, HEADER, HEADING, ROW, menuHeight, menuItems, pickApps } from "./open.js";
@@ -14,11 +14,6 @@ function location() {
 const key = () => JSON.stringify(location());
 const LANG = { ts: "js", tsx: "js", mts: "js", cts: "js", jsx: "js", mjs: "js", toml: "yaml", jsonc: "json", svelte: "html", vue: "html" };
 const PER_FOLDER = 500, TOTAL = 5000;
-// How many apps macOS offered last time for a file kind: the next menu opens at that height.
-const kind = (name) => (name.includes(".") ? name.split(".").pop().toLowerCase() : "");
-function appCounts() {
-  try { const v = JSON.parse(localStorage.getItem("menu.apps") ?? "{}"); return v && typeof v === "object" && !Array.isArray(v) ? v : {}; } catch { return {}; }
-}
 
 async function directory(path, on) {
   if (!on && window()?.platform === "windows") {
@@ -168,16 +163,14 @@ export default class Files extends View {
 
   openMenu(path, entry) {
     const mac = window()?.platform === "macos", local = !this.on;
-    const m = { abs: `${this.root}/${path}`, rel: path, name: entry.name, dir: entry.dir, mac, local };
-    // Not read yet for this kind: room for the default and eight more.
-    const n = appCounts()[kind(entry.name)] ?? 9;
-    const apps = Array.from({ length: n }, (_, i) => ({ name: "", path: "", default: i === 0 }));
-    openOverlay({ mod: "eva-files", kind: "popup", width: 260, height: menuHeight(menuItems({ ...m, apps })), props: { fileMenu: m } });
+    openOverlay({ mod: "eva-files", kind: "popup", width: 260,
+      props: { fileMenu: { abs: `${this.root}/${path}`, rel: path, name: entry.name, dir: entry.dir, mac, local } } });
   }
 
   menuInit(cx) {
     const m = props().fileMenu;
     this.at = 0;
+    this.scroll = ScrollHandle.new();
     this.apps = m.mac && m.local && !m.dir ? null : [];
     this.handle = cx.focus_handle();
     this.handle.focus();
@@ -187,7 +180,6 @@ export default class Files extends View {
         const r = await exec("osascript", ["-l", "JavaScript", "-e", APPS_SCRIPT, m.abs], { timeout: 5000 });
         this.apps = r.code === 0 ? pickApps(JSON.parse(r.stdout), home()) : [];
       } catch { this.apps = []; }
-      localStorage.setItem("menu.apps", JSON.stringify({ ...appCounts(), [kind(m.name)]: this.apps.length }));
       cx.notify();
     });
   }
@@ -206,8 +198,9 @@ export default class Files extends View {
     const items = menuItems({ ...m, apps: this.apps });
     const live = items.map((it, i) => (it.action ? i : -1)).filter(i => i >= 0);
     if (!live.includes(this.at)) this.at = live[0] ?? 0;
-    const step = (by) => { this.at = live[(live.indexOf(this.at) + by + live.length) % live.length]; };
-    return v_flex().id("file-menu").track_focus(this.handle).size_full().min_h(0).p(5).bg("#0a0a0af0").text_size(12.8).text_color(t.foreground)
+    const step = (by) => { this.at = live[(live.indexOf(this.at) + by + live.length) % live.length]; this.scroll.scroll_to_item(this.at); };
+    // The popup takes its content's size: a set height on the root is what lets the list scroll.
+    return v_flex().id("file-menu").track_focus(this.handle).w_full().h(menuHeight(items)).min_h(0).p(5).bg("#0a0a0af0").text_size(12.8).text_color(t.foreground)
       .on_key_down((e, cx) => {
         if (e.key === "down") step(1);
         else if (e.key === "up") step(-1);
@@ -219,7 +212,7 @@ export default class Files extends View {
       .child(h_flex().h(HEADER).flex_none().px(8).gap(7).items_center().text_size(11)
         .child(div().text_color(C.orange).font_weight(700).child(m.dir ? "FOLDER" : "FILE"))
         .child(div().flex_1().min_w(0).truncate().text_color(t.dim).child(m.name)))
-      .child(v_flex().id("file-menu-items").flex_1().min_h(0).overflow_y_scrollbar().children(items.map((it, i) => v_flex()
+      .child(v_flex().id("file-menu-items").flex_1().min_h(0).overflow_y_scrollbar().track_scroll(this.scroll).children(items.map((it, i) => v_flex()
         .when(i > 0 && items[i - 1].group !== it.group, el => el.child(div().mx(8).my(4).h(1).flex_none().bg("#6b3fa0aa")))
         .when(Boolean(it.heading), el => el.child(div().h(HEADING).flex_none().px(10).pt(4).text_size(10.5).font_weight(700).text_color(C.orange).child(it.label.toUpperCase())))
         .when(!it.heading, el => el.child(h_flex().id(`file-menu-${i}`).relative().h(ROW).flex_none().px(10).items_center()
