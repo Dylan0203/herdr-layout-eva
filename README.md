@@ -28,7 +28,7 @@ All art is original vector work. It recreates a mood (colors, type, shapes), not
 
 ## Requirements
 
-- herdr-app 0.1.15 or newer. `eva-toast` needs 0.1.15's layout `toast` field. The mods are clones of Herdr's shipped mods, so a later Herdr may need its changes merged in.
+- herdr-app 0.1.16 or newer. `eva-spaces` stops folder watches with 0.1.16's `cancel()`, and `eva-toast` needs 0.1.15's layout `toast` field. The mods are clones of Herdr's shipped mods, so a later Herdr may need its changes merged in.
 - macOS for the Mincho titles (Hiragino Mincho ProN). On other systems they fall back to another font.
 - For SYNC RATE: `sqlite3` and `jq` on PATH (both ship with macOS).
 
