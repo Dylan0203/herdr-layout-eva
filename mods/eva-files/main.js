@@ -1,8 +1,9 @@
 // A lazy file browser for the focused pane's folder, with bounded read-only previews.
 import { View, div, svg } from "gpui-kit";
 import { v_flex, h_flex, Editor, EditorState } from "gpui-base";
-import { spaces, panes, focused, exec, readTextFile, watchFolder, theme, settings, window } from "herdr";
+import { spaces, panes, focused, exec, readTextFile, watchFolder, theme, settings, window, props, openOverlay, closeOverlay, run, home } from "herdr";
 import { C, MINCHO } from "./eva.js";
+import { APPS_SCRIPT, menuItems, pickApps } from "./open.js";
 
 function location() {
   const space = spaces().find(s => s.active), f = focused();
@@ -13,6 +14,7 @@ function location() {
 const key = () => JSON.stringify(location());
 const LANG = { ts: "js", tsx: "js", mts: "js", cts: "js", jsx: "js", mjs: "js", toml: "yaml", jsonc: "json", svelte: "html", vue: "html" };
 const PER_FOLDER = 500, TOTAL = 5000;
+const ROW = 30;
 
 async function directory(path, on) {
   if (!on && window()?.platform === "windows") {
@@ -33,6 +35,7 @@ async function directory(path, on) {
 
 export default class Files extends View {
   init(_props, cx) {
+    if (props()?.fileMenu) return this.menuInit(cx);
     this.saved = new Map();
     this.entries = new Map(); this.folders = new Set(); this.pending = new Set(); this.marks = {};
     this.refresh(cx);
@@ -147,6 +150,9 @@ export default class Files extends View {
       const path = prefix ? `${prefix}/${entry.name}` : entry.name, open = this.folders.has(path), mark = this.marks[`${this.root}/${path}`];
       out.push(h_flex().id(`file-${path}`).h(28).flex_none().pl(8 + depth * 18).pr(8).gap(7).items_center().cursor_pointer().hover(s => s.bg(t.hover))
         .on_click((_e, cx) => entry.dir ? this.toggle(path, cx) : this.show(path, cx))
+        .on_mouse_down("right", (_e, cx) => { cx.stop_propagation(); this.openMenu(path, entry); })
+        // drag_paths arrived in Herdr 0.1.16: older versions keep a plain row.
+        .when(true, el => typeof el.drag_paths === "function" ? el.drag_paths([`${this.root}/${path}`], { on: this.on }) : el)
         .child(entry.dir ? svg(`mods/eva-files/chevron-${open ? "down" : "right"}.svg`).size(12).flex_none().text_color(t.dim) : div().w(12).flex_none())
         .child(svg(`mods/eva-files/${entry.dir ? "folder" : "file"}.svg`).size(14).flex_none().text_color(t.muted))
         .child(div().flex_1().min_w(0).truncate().child(entry.name))
@@ -156,7 +162,68 @@ export default class Files extends View {
     return out;
   }
 
+  openMenu(path, entry) {
+    const mac = window()?.platform === "macos", local = !this.on;
+    // A popup is as tall as its content: the item list caps itself and scrolls.
+    openOverlay({ mod: "eva-files", kind: "popup", width: 260,
+      props: { fileMenu: { abs: `${this.root}/${path}`, rel: path, name: entry.name, dir: entry.dir, mac, local } } });
+  }
+
+  menuInit(cx) {
+    const m = props().fileMenu;
+    this.at = 0;
+    this.apps = m.mac && m.local && !m.dir ? null : [];
+    this.handle = cx.focus_handle();
+    this.handle.focus();
+    if (this.apps) return;
+    cx.spawn(async cx => {
+      try {
+        const r = await exec("osascript", ["-l", "JavaScript", "-e", APPS_SCRIPT, m.abs], { timeout: 5000 });
+        this.apps = r.code === 0 ? pickApps(JSON.parse(r.stdout), home()) : [];
+      } catch { this.apps = []; }
+      cx.notify();
+    });
+  }
+
+  choose(item, cx) {
+    if (!item?.action) return;
+    const a = item.action;
+    closeOverlay(props().overlay);
+    if (a.type === "exec") exec(a.argv[0], a.argv.slice(1)).catch(() => {});
+    else if (a.type === "copy") cx.write_to_clipboard(a.text);
+    else if (a.type === "terminal") run("terminal.open", { folder: a.folder });
+  }
+
+  menu(cx) {
+    const m = props().fileMenu, t = theme();
+    const items = menuItems({ ...m, apps: this.apps });
+    const live = items.map((it, i) => (it.action ? i : -1)).filter(i => i >= 0);
+    if (!live.includes(this.at)) this.at = live[0] ?? 0;
+    const step = (by) => { this.at = live[(live.indexOf(this.at) + by + live.length) % live.length]; };
+    return v_flex().id("file-menu").track_focus(this.handle).w_full().p(5).bg("#0a0a0af0").text_size(12.8).text_color(t.foreground)
+      .on_key_down((e, cx) => {
+        if (e.key === "down") step(1);
+        else if (e.key === "up") step(-1);
+        else if (e.key === "enter") return this.choose(items[this.at], cx);
+        else if (e.key === "escape") return closeOverlay(props().overlay);
+        else return;
+        cx.notify();
+      })
+      .child(h_flex().h(24).flex_none().px(8).gap(7).items_center().text_size(11)
+        .child(div().text_color(C.orange).font_weight(700).child(m.dir ? "FOLDER" : "FILE"))
+        .child(div().flex_1().min_w(0).truncate().text_color(t.dim).child(m.name)))
+      .child(v_flex().id("file-menu-items").max_h(420).overflow_y_scrollbar().children(items.map((it, i) => v_flex()
+        .when(i > 0 && items[i - 1].group !== it.group, el => el.child(div().mx(8).my(4).h(1).flex_none().bg("#6b3fa0aa")))
+        .when(Boolean(it.heading), el => el.child(div().h(22).flex_none().px(10).pt(4).text_size(10.5).font_weight(700).text_color(C.orange).child(it.label.toUpperCase())))
+        .when(!it.heading, el => el.child(h_flex().id(`file-menu-${i}`).relative().h(ROW).flex_none().px(10).items_center()
+          .when(!it.action, el => el.text_color(t.dim))
+          .when(Boolean(it.action), el => el.cursor_pointer().hover(s => s.bg("#6b3fa033")).on_click((_e, cx) => this.choose(it, cx)))
+          .when(i === this.at && Boolean(it.action), el => el.bg("#6b3fa055").text_color(C.white).child(div().absolute().left(0).top(0).bottom(0).w(3).bg(C.orange)))
+          .child(div().flex_1().min_w(0).truncate().child(it.label)))))));
+  }
+
   render(cx) {
+    if (props()?.fileMenu) return this.menu(cx);
     if (key() !== this.context?.key) this.refresh(cx);
     const t = theme();
     return v_flex().id("files").size_full().min_h(0).overflow_hidden().bg("#0a0a0ae0").border_1().border_color("#6b3fa0aa").text_color(t.foreground).text_size(13)
