@@ -3,6 +3,7 @@ import { View, div, svg } from "gpui-kit";
 import { v_flex, h_flex, Editor, EditorState, ScrollHandle } from "gpui-base";
 import { spaces, panes, focused, exec, readTextFile, watchFolder, theme, settings, window, props, openOverlay, closeOverlay, run, home } from "herdr";
 import { C, MINCHO } from "./eva.js";
+import { fitFolder } from "./tree.js";
 import { APPS_SCRIPT, HEADER, HEADING, ROW, menuHeight, menuItems, pickApps } from "./open.js";
 
 function location() {
@@ -60,7 +61,7 @@ export default class Files extends View {
     const entries = await directory(path ? `${root}/${path}` : root, on);
     if (!this.current(context) || (path && !this.folders.has(path))) return;
     const used = [...this.entries.entries()].filter(([p]) => p !== path).reduce((n, [, e]) => n + e.length, 0);
-    this.entries.set(path, entries.slice(0, Math.max(0, Math.min(PER_FOLDER, TOTAL - used))).sort((a, b) => Number(b.dir) - Number(a.dir) || a.name.localeCompare(b.name)));
+    this.entries.set(path, fitFolder(entries, Math.min(PER_FOLDER, TOTAL - used)));
     if (entries.length > PER_FOLDER || used + entries.length > TOTAL) this.limited = true;
   }
 
