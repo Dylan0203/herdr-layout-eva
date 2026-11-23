@@ -56,6 +56,7 @@ export default class Pane extends View {
       siblings.findIndex((x) => x.pane === p.pane) + 1,
     ).padStart(2, "0");
     const name =
+      p.name ||
       ((p.program?.agent || p.program?.shell) && p.program.name) ||
       p.title ||
       p.program?.name ||
