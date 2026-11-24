@@ -28,7 +28,7 @@ All art is original vector work. It recreates a mood (colors, type, shapes), not
 
 ## Requirements
 
-- herdr-app 0.1.15 or newer. `eva-toast` needs 0.1.15's layout `toast` field. The mods are clones of Herdr's shipped mods, so a later Herdr may need its changes merged in.
+- herdr-app 0.1.16 or newer. `eva-spaces` stops folder watches with 0.1.16's `cancel()`, and `eva-toast` needs 0.1.15's layout `toast` field. A pane name given with Rename shows in the pane header from 0.1.17. The mods are clones of Herdr's shipped mods, so a later Herdr may need its changes merged in.
 - macOS for the Mincho titles (Hiragino Mincho ProN). On other systems they fall back to another font.
 - For SYNC RATE: `sqlite3` and `jq` on PATH (both ship with macOS).
 
@@ -90,7 +90,7 @@ Edit in `~/.config/herdr-app/` (Herdr ignores edits behind symlinks), then copy 
 
 ```sh
 ./scripts/export.sh   # refuses if the eva.js copies differ
-bun install && bunx --bun vitest run
+bun install && bun run test   # not `bun test`: that is Bun's own runner
 ```
 
 Before tagging a release, bump `mods/eva-chrome/version.js` to the new version. Otherwise every install keeps announcing the update it already has; a test fails once the version lags the latest tag.
