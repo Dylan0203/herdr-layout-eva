@@ -90,7 +90,7 @@ Edit in `~/.config/herdr-app/` (Herdr ignores edits behind symlinks), then copy 
 
 ```sh
 ./scripts/export.sh   # refuses if the eva.js copies differ
-bun install && bunx --bun vitest run
+bun install && bun run test   # not `bun test`: that is Bun's own runner
 ```
 
 Before tagging a release, bump `mods/eva-chrome/version.js` to the new version. Otherwise every install keeps announcing the update it already has; a test fails once the version lags the latest tag.

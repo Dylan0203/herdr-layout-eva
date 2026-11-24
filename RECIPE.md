@@ -174,7 +174,7 @@ Run these from a fresh clone of this repo.
 
 - `herdr-app check` passes for all eleven `eva-*` mods.
 - `herdr-app status` shows `"errors": []` after `layout.switch {"name": "eva"}`.
-- `bunx --bun vitest run` passes (77 tests).
+- `bun run test` passes.
 - A screenshot shows the command deck with a red-ruled strip, the moving orange/purple schematic and large agent counts, SYNC RATE cards, a purple active tab and space with orange edges, an orange-outlined focused card, an orange focused pane header, and white Mincho section titles.
 - An agent that finishes while you look elsewhere posts a purple 通報 toast; clicking it goes to that agent.
 - Switching to another space shows the 区画移行 card near the top for about 1.4 seconds; switching to another agent in the same space shows 接続切替.
