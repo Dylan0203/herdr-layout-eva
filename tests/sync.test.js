@@ -94,9 +94,9 @@ describe("catalogPath", () => {
     );
   });
 
-  it("跳脫 id 裡的雙引號", () => {
-    expect(catalogPath('we"ird', "mo\"del")).toBe(
-      '$."we""ird".models."mo""del".limit.context',
+  it("跳脫 id 裡的單引號，好放進 SQL 字串", () => {
+    expect(catalogPath("it's", "mo'del")).toBe(
+      "$.\"it''s\".models.\"mo''del\".limit.context",
     );
   });
 });
