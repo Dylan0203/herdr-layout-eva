@@ -3,6 +3,7 @@ import {
   claudeRate,
   codexRate,
   opencodeRate,
+  catalogPath,
   elapsedMs,
   countCompacts,
   formatSize,
@@ -83,6 +84,20 @@ describe("opencodeRate", () => {
   it("沒有 tokens 或 window 時回傳 null", () => {
     expect(opencodeRate(null, 1050000)).toBeNull();
     expect(opencodeRate({ input: 10 }, null)).toBeNull();
+  });
+});
+
+describe("catalogPath", () => {
+  it("組出 models.dev catalog 的 json_extract 路徑", () => {
+    expect(catalogPath("zai-coding-plan", "glm-5.3-flash")).toBe(
+      '$."zai-coding-plan".models."glm-5.3-flash".limit.context',
+    );
+  });
+
+  it("跳脫 id 裡的單引號，好放進 SQL 字串", () => {
+    expect(catalogPath("it's", "mo'del")).toBe(
+      "$.\"it''s\".models.\"mo''del\".limit.context",
+    );
   });
 });
 

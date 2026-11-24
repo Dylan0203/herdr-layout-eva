@@ -254,6 +254,45 @@ const OPENCODE_QUERIES = {
     order by m.time_created desc limit 1`,
 };
 
+// Model context windows: the models cache file, then the catalog OpenCode keeps
+// in its db (kv, models-dev:v2:catalog) now that the cache file no longer
+// exists. The catalog row is ~12 MB, so a found window is remembered per model;
+// a miss (db locked, catalog not written yet) is retried on the next poll.
+// The path goes inside a single-quoted SQL literal, hence the doubled quotes.
+const sqlQuote = (s) => s.replaceAll("'", "''");
+export const catalogPath = (provider, model) =>
+  `$."${sqlQuote(provider)}".models."${sqlQuote(model)}".limit.context`;
+
+const windows = new Map();
+async function opencodeWindow(provider, model) {
+  const key = `${provider}/${model}`;
+  if (windows.has(key)) return windows.get(key);
+  const window =
+    Number(
+      await sh("jq", [
+        "-r",
+        "--arg",
+        "p",
+        provider,
+        "--arg",
+        "m",
+        model,
+        ".[$p].models[$m].limit.context // empty",
+        `${home()}/.cache/opencode/models.json`,
+      ]).catch(() => ""),
+    ) ||
+    Number(
+      await sh("sqlite3", [
+        "-readonly",
+        `${home()}/.local/share/opencode/opencode.db`,
+        `select json_extract(json_extract(value, '$.body'), '${catalogPath(provider, model)}')
+          from kv where key = 'models-dev:v2:catalog'`,
+      ]).catch(() => ""),
+    ) || null;
+  if (window) windows.set(key, window);
+  return window;
+}
+
 async function opencode(pid) {
   const argv = await sh("ps", ["-o", "command=", "-p", pid]);
   if (!/\bopencode\b/.test(argv) || /\bserve\b/.test(argv)) return null;
@@ -285,21 +324,7 @@ async function opencode(pid) {
   );
   const row = found.filter(Boolean).sort((a, b) => b.at - a.at)[0];
   if (!row) return null;
-  const window =
-    Number(
-      await sh("jq", [
-        "-r",
-        "--arg",
-        "p",
-        row.provider,
-        "--arg",
-        "m",
-        row.model,
-        ".[$p].models[$m].limit.context // empty",
-        `${home()}/.cache/opencode/models.json`,
-      ]),
-    ) || null;
-  return opencodeRate(JSON.parse(row.tokens), window);
+  return opencodeRate(JSON.parse(row.tokens), await opencodeWindow(row.provider, row.model));
 }
 
 // A login shell, so PATH finds claude however it was installed.
