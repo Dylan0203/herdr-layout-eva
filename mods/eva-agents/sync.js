@@ -255,13 +255,20 @@ const OPENCODE_QUERIES = {
 };
 
 // Model context windows: the models cache file, then the catalog OpenCode keeps
-// in its db (kv, models-dev:v2:catalog) now that the cache file no longer
-// exists. The catalog row is ~12 MB, so a found window is remembered per model;
-// a miss (db locked, catalog not written yet) is retried on the next poll.
+// in its db (kv, a models-dev:v<N>:catalog key) now that the cache file no
+// longer exists. The catalog row is ~12 MB, so a found window is remembered per
+// model; a miss (db locked, catalog not written yet) is retried on the next poll.
 // The path goes inside a single-quoted SQL literal, hence the doubled quotes.
 const sqlQuote = (s) => s.replaceAll("'", "''");
 export const catalogPath = (provider, model) =>
   `$."${sqlQuote(provider)}".models."${sqlQuote(model)}".limit.context`;
+
+// OpenCode numbers the key (v2, v3, ...) and drops rows cached under older
+// names, so read whichever is there. The key is a glob, so name a single row:
+// the highest version, in case two are cached. A :meta sibling never matches.
+export const catalogQuery = (provider, model) =>
+  `select json_extract(json_extract(value, '$.body'), '${catalogPath(provider, model)}')
+    from kv where key glob 'models-dev:v*:catalog' order by key desc limit 1`;
 
 const windows = new Map();
 async function opencodeWindow(provider, model) {
@@ -285,8 +292,7 @@ async function opencodeWindow(provider, model) {
       await sh("sqlite3", [
         "-readonly",
         `${home()}/.local/share/opencode/opencode.db`,
-        `select json_extract(json_extract(value, '$.body'), '${catalogPath(provider, model)}')
-          from kv where key = 'models-dev:v2:catalog'`,
+        catalogQuery(provider, model),
       ]).catch(() => ""),
     ) || null;
   if (window) windows.set(key, window);
