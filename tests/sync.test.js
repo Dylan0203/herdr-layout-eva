@@ -1,9 +1,11 @@
 import { describe, it, expect } from "vitest";
+import { execFileSync } from "node:child_process";
 import {
   claudeRate,
   codexRate,
   opencodeRate,
   catalogPath,
+  catalogQuery,
   elapsedMs,
   countCompacts,
   formatSize,
@@ -98,6 +100,46 @@ describe("catalogPath", () => {
     expect(catalogPath("it's", "mo'del")).toBe(
       "$.\"it''s\".models.\"mo''del\".limit.context",
     );
+  });
+});
+
+describe("catalogQuery", () => {
+  const catalog = (context) =>
+    JSON.stringify({
+      updatedAt: 1,
+      body: JSON.stringify({
+        "zai-coding-plan": { models: { "glm-5.3-flash": { limit: { context } } } },
+      }),
+    });
+  const row = {
+    v2: `insert into kv values ('models-dev:v2:catalog', '${catalog(200000)}', 1, 1);`,
+    meta: `insert into kv values ('models-dev:v3:catalog:meta', '{"updatedAt":3,"etag":"x"}', 2, 3);`,
+    v3: `insert into kv values ('models-dev:v3:catalog', '${catalog(1000000)}', 2, 2);`,
+  };
+  const run = (model, ...rows) =>
+    execFileSync(
+      "sqlite3",
+      [
+        ":memory:",
+        `create table kv (key text primary key, value text not null,
+          time_created integer not null, time_updated integer not null);`,
+        ...rows,
+        catalogQuery("zai-coding-plan", model),
+      ],
+      { encoding: "utf8" },
+    ).trim();
+
+  it("讀得到 opencode 2.4.1 的 models-dev:v3:catalog", () => {
+    expect(run("glm-5.3-flash", row.meta, row.v3)).toBe("1000000");
+  });
+
+  it("舊版 opencode 的 models-dev:v2:catalog 一樣讀得到", () => {
+    expect(run("glm-5.3-flash", row.v2)).toBe("200000");
+  });
+
+  it("兩個版本都快取時只回最新那一列；查不到的 model 回空", () => {
+    expect(run("glm-5.3-flash", row.v2, row.meta, row.v3)).toBe("1000000");
+    expect(run("no-such-model", row.v2, row.meta, row.v3)).toBe("");
   });
 });
 
