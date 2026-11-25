@@ -6,6 +6,7 @@ import {
   opencodeRate,
   catalogPath,
   catalogQuery,
+  rememberFound,
   elapsedMs,
   countCompacts,
   formatSize,
@@ -100,6 +101,24 @@ describe("catalogPath", () => {
     expect(catalogPath("it's", "mo'del")).toBe(
       "$.\"it''s\".models.\"mo''del\".limit.context",
     );
+  });
+});
+
+describe("rememberFound", () => {
+  it("查到才記住，查不到下一輪再查", async () => {
+    const answers = [null, 200000];
+    let calls = 0;
+    const window = rememberFound(async () => answers[calls++]);
+    expect(await window("p", "m")).toBe(null);
+    expect(await window("p", "m")).toBe(200000);
+    expect(await window("p", "m")).toBe(200000);
+    expect(calls).toBe(2);
+  });
+
+  it("每個 provider/model 各記各的", async () => {
+    const window = rememberFound(async (p, m) => `${p}:${m}`);
+    expect(await window("a", "x")).toBe("a:x");
+    expect(await window("b", "y")).toBe("b:y");
   });
 });
 

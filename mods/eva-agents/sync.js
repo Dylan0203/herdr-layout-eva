@@ -270,11 +270,19 @@ export const catalogQuery = (provider, model) =>
   `select json_extract(json_extract(value, '$.body'), '${catalogPath(provider, model)}')
     from kv where key glob 'models-dev:v*:catalog' order by key desc limit 1`;
 
-const windows = new Map();
-async function opencodeWindow(provider, model) {
-  const key = `${provider}/${model}`;
-  if (windows.has(key)) return windows.get(key);
-  const window =
+export const rememberFound = (lookup) => {
+  const found = new Map();
+  return async (...args) => {
+    const key = args.join("/");
+    if (found.has(key)) return found.get(key);
+    const value = await lookup(...args);
+    if (value) found.set(key, value);
+    return value;
+  };
+};
+
+const opencodeWindow = rememberFound(
+  async (provider, model) =>
     Number(
       await sh("jq", [
         "-r",
@@ -294,10 +302,9 @@ async function opencodeWindow(provider, model) {
         `${home()}/.local/share/opencode/opencode.db`,
         catalogQuery(provider, model),
       ]).catch(() => ""),
-    ) || null;
-  if (window) windows.set(key, window);
-  return window;
-}
+    ) ||
+    null,
+);
 
 async function opencode(pid) {
   const argv = await sh("ps", ["-o", "command=", "-p", pid]);
